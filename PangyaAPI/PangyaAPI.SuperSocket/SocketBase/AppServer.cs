@@ -427,7 +427,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
             }
         }
 
-        private KeyValuePair<uint, TAppSession>[] SessionSource
+        public KeyValuePair<uint, TAppSession>[] SessionSource
         {
             get
             {

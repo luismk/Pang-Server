@@ -650,7 +650,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
         {
             //  //throw new NotImplementedException();
         }
-        internal bool Clear()
+        public bool Clear()
         {
             return true;
         }

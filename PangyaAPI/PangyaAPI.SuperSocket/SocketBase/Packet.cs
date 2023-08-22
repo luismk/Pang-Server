@@ -1,4 +1,5 @@
-﻿using PangyaAPI.SuperSocket.Cryptor;
+﻿using PangyaAPI.Cryptor.HandlePacket;
+using PangyaAPI.SuperSocket.Cryptor;
 using PangyaAPI.Utilities;
 using System;
 using System.IO;
@@ -39,6 +40,11 @@ namespace PangyaAPI.SuperSocket.SocketBase
         public void ReadObject(object @value)
         {
             ReadPlain(value);
+        }
+
+        public void Version_Decrypt(uint @packet_version)
+        {
+            Pang.Packet_Ver_Decrypt(ref @packet_version);
         }
     }
     //public class ConversionByte

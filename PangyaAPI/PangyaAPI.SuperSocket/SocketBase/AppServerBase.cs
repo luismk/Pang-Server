@@ -60,10 +60,13 @@ namespace PangyaAPI.SuperSocket.SocketBase
         }
         public IFFHandle IFF { get; set; }
         public IniHandle Ini { get; set; }
-        public ServerInfoEx m_si { get; set; }
+        public ServerInfoEx m_si { get => _m_si; set => _m_si = value; }
+        protected ServerInfoEx _m_si { get; set; }
         public List<TableMac> ListBlockMac { get; set; }
         public List<ServerInfo> m_server_list { get; set; }
         protected func_arr funcs { get; set; }
+
+        public ServerInfoEx getInfo() => m_si;
 
         /// <summary>
         /// Gets or sets the receive filter factory.

@@ -174,12 +174,14 @@ namespace PangyaAPI.SuperSocket.SocketBase
             public Convertido stConvertido;
         }
     }
-    public class AppPacketBase 
+    public class AppPacketBase : IDisposable
     {
         private OffsetIndex mPlain = new OffsetIndex();
         private OffsetIndex mMaked = new OffsetIndex();
         public ushort m_Tipo;
         int CHUNCK_ALLOC = 1024;
+        private bool disposedValue;
+
         public AppPacketBase()
         {
             mPlain.Buffer = new byte[0];
@@ -543,6 +545,23 @@ namespace PangyaAPI.SuperSocket.SocketBase
             {
             try
             {
+                byte[] arr = new byte[size];
+
+                IntPtr ptr = Marshal.AllocHGlobal(size);
+                Marshal.StructureToPtr(value, ptr, false);
+                Marshal.Copy(ptr, arr, 0, size);
+                Marshal.FreeHGlobal(ptr);
+                AddPlain(arr, size);
+            }
+            catch
+            {
+            }
+        }
+        public void AddBuffer(object value, object value_or)
+        {
+            try
+            {
+                int size = Marshal.SizeOf(value_or);
                 byte[] arr = new byte[size];
 
                 IntPtr ptr = Marshal.AllocHGlobal(size);
@@ -941,6 +960,40 @@ namespace PangyaAPI.SuperSocket.SocketBase
             mMaked.Reset();
 
             AddPlain(BitConverter.GetBytes(m_Tipo), sizeof(ushort));
+        }
+        public void Clear()
+        {
+            Dispose();
+        }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    mPlain.Clear();
+                    mMaked.Clear();
+                    m_Tipo = ushort.MaxValue;
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                disposedValue = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~AppPacketBase()
+        // {
+        //     // Não altere este código. Coloque o código de limpeza no método 'Dispose(bool disposing)'
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Não altere este código. Coloque o código de limpeza no método 'Dispose(bool disposing)'
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -47,7 +47,6 @@ namespace PangyaAPI.SuperSocket.Interface
         int SessionCount { get; }
         IFFHandle IFF { get; set; }
         IniHandle Ini { get; set; }
-        ServerInfoEx m_si { get; set; }
         List<TableMac> ListBlockMac { get; set; }
     }
 

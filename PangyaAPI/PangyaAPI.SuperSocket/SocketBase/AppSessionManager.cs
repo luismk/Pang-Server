@@ -3,176 +3,204 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using PangyaAPI.SuperSocket.Interface;
-using PangyaAPI.Utilities;
-using static System.Collections.Specialized.BitVector32;
-
+using _smp = PangyaAPI.Utilities.Log;
 namespace PangyaAPI.SuperSocket.SocketBase
 {
     public class AppSessionManager
     {
-        private static uint m_count = 0u;
-        private static bool m_is_init = false;
-        private object m_cs = new object(); // Use object for locking in C#
-        private List<AppSession> m_sessions = new List<AppSession>();
-
-       
-        private List<AppSession> m_sessionsDel = new List<AppSession>();
-        private int m_max_session;
-        public AppSessionManager(int maxSession)
+        protected List<IAppSession> m_sessions;
+        List<IAppSession> m_session_del;    // Session para deletar
+        AppServer Server { get; set; }
+        protected uint m_max_session;
+        uint m_TTL;				// Time To Live
+        public IAppSession this[int index]
         {
-            m_max_session = maxSession;
-            // Load config from server.ini
-            ConfigInit();
-
-            m_is_init = true;
-
-            for (int i = 0; i < maxSession; i++)
+            get
             {
-                Add(new AppSession());
+                return m_sessions[index];
+            }
+            set
+            {
+                m_sessions[index] = value;
             }
         }
 
-        protected void Add(AppSession appSession)
+        public List<IAppSession> Values
         {
-            m_sessions.Add(appSession);
+            get { return m_sessions.Where(c => c.SocketSession != null).ToList(); }
         }
 
-        public void Clear()
+        public AppSessionManager(int _max_session)
         {
-            lock (m_cs)
+            m_max_session = (uint)_max_session;
+            m_sessions = new List<IAppSession>();
+            m_session_del = new List<IAppSession>();
+            for (uint i = 0; i < _max_session; i++)
             {
-                m_sessionsDel.Clear();
-                foreach (var session in m_sessions)
-                {
-                    if (session != null)
-                    {
-                        session.Dispose();
-                    }
-                }
+                m_sessions.Add(new AppSession());
+            }
+        }
+
+        public void clear()
+        {
+            // Limpa as session para deletar
+            if (!(m_session_del.Count == 0))
+                m_session_del.Clear();
+
+            // Não Vazias
+            if (!(m_sessions.Count == 0))
+            {
+
+                for (int i = 0; i < m_sessions.Count(); ++i)
+                    if (m_sessions[i] != null)
+                        m_sessions[i].Close();
+
                 m_sessions.Clear();
             }
         }
 
-        public virtual bool DeleteSession(AppSession session)
+        protected uint m_count
         {
-            bool ret = true;
+            get; set;
+        }
 
-            lock (m_cs)
+
+        public IAppSession addSession(TcpClient _sock)
+        {
+            uint index;
+
+#pragma warning disable CS0652 // A comparação com constante integral é inútil. A constante está fora do intervalo do tipo
+            if ((index = findSessionFree()) == uint.MaxValue)
             {
-                int oid = (int)session.m_oid;
-                if ((ret = session.Clear()))
-                {
-                    if (m_count != 0)
-                    {
-                        m_count--;
-                    }
-                }
+                throw new Exception("[session_manager::addSession][ERR_SESSION] already goal limit session estabilized.");
             }
+#pragma warning restore CS0652 // A comparação com constante integral é inútil. A constante está fora do intervalo do tipo
+
+
+            AppSession pSession = null;
+
+            pSession = (AppSession)m_sessions[(int)index];
+            pSession.m_oid = index;
+
+            m_count++;
+            m_sessions[(int)index] = pSession;
+            return pSession;
+        }
+        public bool deleteSession(AppSession _session)
+        {
+            if (_session == null)
+                throw new Exception("[session_manager::deleteSession][ERR_SESSION] _session is nullptr.");
+
+
+            bool ret = false;
+            if ((ret = _session.Clear()))
+                m_count--;
+
+            _session.Dispose();
 
             return ret;
         }
 
-        // Other methods...
+        public uint getNumSessionOnline() { return m_count; }
 
-        private void ConfigInit()
+        public IAppSession findSessionByOID(uint value)
         {
-            // Load config from INI file and set m_TTL
+            for (int i = 0; i < value; i++)
+            {
+                if (m_sessions[i].m_oid == value)
+                    return m_sessions[i];
+            }
+            return null;
         }
 
-        private uint FindSessionFree()
+        public IAppSession findSessionByNickname(string _nickname)
         {
-            for (int i = 0; i < m_max_session; ++i)
+            for (int i = 0; i < m_count; i++)
+            {
+                if (m_sessions[i].SocketSession != null && _nickname == m_sessions[i].GetNickname())
+                    return m_sessions[i];
+            }
+            return null;
+        }
+
+        public IAppSession findSessionByUID(uint _uid)
+        {
+            for (int i = 0; i < m_count; i++)
+            {
+                if (m_sessions[i].SocketSession != null && _uid == m_sessions[i].GetUID())
+                    return m_sessions[i];
+            }
+            return null;
+        }
+
+        public List<IAppSession> findAllSessionByUID(uint _uid)
+        {
+            List<IAppSession> v_s = new List<IAppSession>();
+            for (int i = 0; i < m_count; i++)
+            {
+                if (m_sessions[i].SocketSession != null && _uid == m_sessions[i].GetUID())
+                    v_s.Add(m_sessions[i]);
+            }
+            return v_s;
+        }
+        public uint findSessionFree()
+        {
+            for (int i = 0; i < m_sessions.Count; i++)
             {
                 if (m_sessions[i].SocketSession == null)
                 {
-                    return Convert.ToUInt32(i);
+                    return (uint)i;
                 }
             }
             return uint.MaxValue;
         }
 
+        public uint numSessionConnected() { return m_count; }
 
-        public uint NumSessionOnline
-        {
-            get
-            {
-                uint curr_online = 0;
-                lock (m_cs)
-                {
-                    curr_online = m_count;
-                }
-                return curr_online;
-            }
-        }
-
-        public AppSession FindSessionByOID(uint _oid)
-        {
-            AppSession _session = null;
-            lock (m_cs)
-            {
-                _session = (AppSession)m_sessions.FirstOrDefault(el =>
-                {
-                    return el.SocketSession != null &&
-                           el.m_oid == _oid;
-                });
-            }
-            return _session;
-        }
-
-        public AppSession FindSessionByUID(uint _uid)
-        {
-            AppSession _session = null;
-            lock (m_cs)
-            {
-                _session = (AppSession)m_sessions.FirstOrDefault(el =>
-                {
-                    return el.SocketSession != null &&
-                           el.GetUID() == _uid;
-                });
-            }
-            return _session;
-        }
-
-        public List<AppSession> FindAllSessionByUID(uint _uid)
-        {
-            List<AppSession> v_s = new List<AppSession>();
-            lock (m_cs)
-            {
-                v_s = m_sessions.Where(el =>
-                {
-                    return el.SocketSession != null &&
-                           el.GetUID() == _uid;
-                }).ToList();
-            }
-            return v_s;
-        }
-
-        public AppSession FindSessionByNickname(string _nickname)
-        {
-            AppSession s = null;
-            lock (m_cs)
-            {
-                s = (AppSession)m_sessions.FirstOrDefault(el =>
-                {
-                    return el.SocketSession != null &&
-                           string.Equals(el.GetNickname(), _nickname);
-                });
-            }
-            return s;
-        }
-        public bool IsFull()
+        public bool isFull()
         {
             bool ret = false;
-            lock (m_cs)
-            {
-                ret = m_sessions.Count(session =>
-                {
-                    return session.SocketSession != null;
-                }) == m_sessions.Count;
-            }
+            uint count = (uint)m_sessions.Where(c => c.SocketSession != null).Count();
+
+            ret = count == m_count;
             return ret;
         }
 
+        public void checkSessionLive(object state)
+        {
+            if (Monitor.TryEnter(state))
+            {
+                try
+                {
+                    var sessionSource = Server.SessionSource;
+
+                    if (sessionSource == null)
+                        return;
+
+                    DateTime now = DateTime.Now;
+                    DateTime timeOut = now.AddSeconds(0 - Server.Config.IdleSessionTimeOut);
+
+                    var timeOutSessions = sessionSource.Where(s => s.Value.LastActiveTime <= timeOut).Select(s => s.Value);
+
+                    Parallel.ForEach(timeOutSessions, s =>
+                    {
+                        _smp.Message_Pool.push(string.Format("The session will be closed for {0} timeout, the session start time: {1}, last active time: {2}!", now.Subtract(s.LastActiveTime).TotalSeconds, s.StartTime, s.LastActiveTime));
+
+                        s.Close(CloseReason.TimeOut);
+                    });
+                }
+                catch (Exception e)
+                {
+                    _smp.Message_Pool.push("Clear idle session error!", e);
+                }
+                finally
+                {
+                    Monitor.Exit(state);
+                }
+            }
+
+        }
     }
 }
