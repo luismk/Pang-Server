@@ -12,7 +12,7 @@ Game Server, you can customize it to work however you want
 ### Installation
 
 the configuration is here:
-https://github.com/luismk/Pangya-Server-Global/tree/main/GameServer/server.ini
+[view](https://github.com/luismk/Pang-Server/tree/main/GameServer/GameServer/server.ini)
 
 ### Authors
 * **Luis MK** - [Pangya GameRaze](https://github.com/luismk)
