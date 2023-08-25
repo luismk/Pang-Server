@@ -1,13 +1,7 @@
 ﻿using GameServer.TYPE;
-using PangyaAPI.SQL.DATA.TYPE;
 using PangyaAPI.SQL;
-using PangyaAPI.SQL.TYPE;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using PangyaAPI.Utilities;
 namespace GameServer.Cmd
 {
@@ -44,7 +38,7 @@ namespace GameServer.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             if (m_uid == 0)
                 throw new exception("[CmdUseItemBuff::prepareConsulta][Error] m_uid is invalid(zero)");
@@ -53,7 +47,7 @@ namespace GameServer.Cmd
                 throw new exception("[CmdUseItemBuff::prepareConsulta][Error] m_ib[TYPEID=" + (m_ib._typeid) + ", TEMPO=" + (m_time) + "] is invalid");
 
 
-            var r = procedure(_db, "pangya.ProcUseItemBuff", new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcUseItemBuff", new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
             m_ib.index = long.MaxValue;
 
             checkResponse(r, "nao conseguiu usar Item[TYPEID=" + (m_ib._typeid) + ", TIPO=" + (m_ib.tipo) + ", PERCENT="

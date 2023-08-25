@@ -4,6 +4,7 @@ using PangyaAPI.SuperSocket.Ext;
 using PangyaAPI.SuperSocket.Interface;
 using PangyaAPI.Utilities;
 using PangyaAPI.Utilities.BinaryModels;
+using PangyaAPI.Utilities.Log;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -57,8 +58,8 @@ namespace PangyaAPI.SuperSocket.SocketBase
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class PacketHead
     {
-        public byte LowKey;
-        public ushort Size;
+        public byte LowKey { get; set; }
+        public ushort Size { get; set; }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -179,7 +180,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
         private OffsetIndex mPlain = new OffsetIndex();
         private OffsetIndex mMaked = new OffsetIndex();
         public ushort m_Tipo;
-        int CHUNCK_ALLOC = 1024;
+        private readonly int CHUNCK_ALLOC = 1024;
         private bool disposedValue;
 
         public AppPacketBase()
@@ -339,10 +340,20 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 LowKey = 0, // low part of key random - 0 nesse pacote porque ele é o primeiro que passa a chave
                 Size = (ushort)(mPlain.IndexW + 1)
             };
+            //0x00,
+            //0x0B, 0x00,//size
+            //0x00, ???
+            //0x00,//size
+            //0x00, //zero
+            //_session.m_key, 0x00, 0x00, 0x00, //key
+            //0x75, 0x27, 0x00, 0x00// 
+            byte key = 0;
             switch (m_Tipo)
             {
                 case 0x0B00:// Pacote Raw Login
                     mPlain.Buffer[1] = 0;
+                    //key = mPlain.Buffer[2];
+                    //mPlain.Buffer[2] = 0;
                     break;
                 case 0x2E:      // Pacote Raw MSN
                 case 0x3F:      // Pacote Raw Game
@@ -353,17 +364,10 @@ namespace PangyaAPI.SuperSocket.SocketBase
             }
             mMaked.Reset();
             AddMaked(ph);
-            AddByte(0);// byte com valor 0 para dizer que é um pacote raw
+            AddMaked(key.ConvertArray(), 1);// byte com valor 0 para dizer que é um pacote raw
             AddMaked(mPlain.Buffer, mPlain.IndexW);
-            mMaked.Buffer.DebugDump();
         }
-        private void AddAlloc(OffsetIndex index, byte[] @buf, int size)
-        {
-            Alloc(ref index, size);
-            Buffer.BlockCopy(@buf, 0, index.Buffer, index.IndexW, size);
-            index.IndexW += size;
-        }
-
+       
         public void AddPlain(byte[] @buf, int size)
         {
             if (@buf == null)
@@ -384,7 +388,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
             Buffer.BlockCopy(mPlain.Buffer, mPlain.IndexR, @buf, 0, size);
             mPlain.IndexR += size;
         }
-        public void ReadPlain(object @value)
+        public object ReadBuffer(object @value)
         {
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
@@ -393,16 +397,21 @@ namespace PangyaAPI.SuperSocket.SocketBase
             int size = Marshal.SizeOf(value);
             byte[] buf = new byte[size];
 
+            ReadBuffer(@buf, size);
+
+            if (buf.Length != size)
+            {
+                throw new Exception(
+                    $"The {nameof(value)} length ({buf.Length}) mismatches the length of the passed structure ({size})");
+            }
+
             IntPtr ptr = Marshal.AllocHGlobal(size);
-            Marshal.StructureToPtr(value, ptr, true);
-            Marshal.Copy(ptr, buf, 0, size);
+
+            Marshal.Copy(buf, 0, ptr, size);
+
+            value = Marshal.PtrToStructure(ptr, value.GetType());
             Marshal.FreeHGlobal(ptr);
-
-            if (buf == null)
-                throw new ArgumentNullException(nameof(buf));
-
-            Buffer.BlockCopy(mPlain.Buffer, mPlain.IndexR, @buf, 0, size);
-            mPlain.IndexR += size;
+            return value;
         }
 
         public void AddMaked(byte[] buf, int size)
@@ -477,28 +486,13 @@ namespace PangyaAPI.SuperSocket.SocketBase
             mMaked.IndexW = 0;
         }
 
-        private void Add(byte[] buf, int size, bool _)
-        {
-            Array.Copy(buf, 0, mMaked.Buffer, mMaked.IndexW, size);
-            mMaked.IndexW += size;
-        }
-
+       
         private void Add(ref OffsetIndex index, byte[] buf, int size)
         {
             Buffer.BlockCopy(buf, 0, index.Buffer, index.IndexW, size);            
             index.IndexW += size;
         }
-        private void Read(byte[] buf, int size)
-        {
-            Array.Copy(mMaked.Buffer, mMaked.IndexR, buf, 0, size);
-            mMaked.IndexR += size;
-        }
-        private void Read(ref OffsetIndex index, byte[] buf, int size)
-        {
-            Array.Copy(index.Buffer, index.IndexR, buf, 0, size);
-            index.IndexR += size;
-        }
-
+      
         public ulong ReadUInt64()
         {
             byte[] bytes = new byte[sizeof(ulong)];
@@ -599,11 +593,9 @@ namespace PangyaAPI.SuperSocket.SocketBase
             AddPlain(buffer, buffer.Length);
         }
 
-        public void ReadBuffer(out byte[] buffer)
+        public void ReadBuffer(byte[] @buffer, int len)
         {
-            uint len = ReadUInt32();
-            buffer = new byte[len];
-            ReadPlain(buffer, (int)len);
+            ReadPlain(@buffer, len);
         }
 
         public void AddZeroByte(int size)
@@ -656,7 +648,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
         public void AddByte(byte b)
         {
-            AddPlain(new byte[] { b }, 1);
+            AddPlain(b.ConvertArray(), 1);
         }
 
         public void ReadByte(out byte b)
@@ -927,7 +919,12 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
         public WSABuf GetMakedBuf()
         {
-            return new WSABuf { Length = (uint)mMaked.IndexW, Buffer = mMaked.Buffer };
+            return 
+                new WSABuf
+                { 
+                    Length = (uint)mMaked.IndexW,
+                    Buffer = mMaked.Buffer
+                };
         }
 
         public int GetSizePlain()

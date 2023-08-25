@@ -31,12 +31,12 @@ namespace PangyaAPI.SQL.DATA.Cmd
             return;
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             if (string.IsNullOrEmpty(m_mac_address))
                 throw new Exception("[CmdInsertBlockMAC::prepareConsulta][Error] m_mac_address is empty.");
 
-            var r = procedure(_db, "pangya.ProcInsertBlockMAC", new string[] { "@MAC" }, new type_SqlDbType[] { type_SqlDbType.NVarChar },
+            var r = procedure("pangya.ProcInsertBlockMAC", new string[] { "@MAC" }, new type_SqlDbType[] { type_SqlDbType.NVarChar },
                 new string[] { m_mac_address }, ParameterDirection.Input);
 
             checkResponse(r, "nao conseguiu inserir o MAC ADDRESS[" + m_mac_address + "] para a lista de MAC bloqueado");

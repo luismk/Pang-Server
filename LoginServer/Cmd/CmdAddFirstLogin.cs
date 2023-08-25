@@ -23,9 +23,9 @@ namespace LoginServer.Cmd
             // N�o usa por que � um UPDATE
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
-            var r = consulta(_db, "UPDATE pangya.account SET FIRST_LOGIN = " + m_flag + " WHERE UID = " + m_uid.ToString());
+            var r = consulta( "UPDATE pangya.account SET FIRST_LOGIN = " + m_flag + " WHERE UID = " + m_uid.ToString());
             checkResponse(r, "nao conseguiu atualizar o first login do player: " + (m_uid));
             return r;
         }

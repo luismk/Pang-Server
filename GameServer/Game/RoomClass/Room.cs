@@ -1,4 +1,4 @@
-﻿using GameServer.Player;
+﻿using GameServer.Session;
 using GameServer.TYPE;
 using System;
 using System.Collections.Generic;
@@ -10,8 +10,8 @@ namespace GameServer.Game.RoomClass
 {
     public class Room
     {
-		List<GPlayer> v_sessions;
-		SortedList<GPlayer, PlayerRoomInfoEx> m_player_info;
+		List<Player> v_sessions;
+		SortedList<Player, PlayerRoomInfoEx> m_player_info;
 		SortedList<uint/*UID*/, bool> m_player_kicked;
 
 		Manager.PersonalShopManager m_personal_shop;

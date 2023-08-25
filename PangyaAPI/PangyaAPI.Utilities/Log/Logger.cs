@@ -140,6 +140,15 @@ namespace PangyaAPI.Utilities.Log
             var s = string.Format("[{0}] : {1}/Line({2})", msg, msg2, _code);
             push(new Message(s, _tipo));
         }
+        public static void push(string msg2, string msg, int _code = 0, type_msg _tipo = 0)
+        {
+            if (date == DateTime.MinValue)
+            {
+                date = DateTime.Now;
+            }
+            var s = string.Format("[{0}] : {1}/Line({2})", msg, msg2, _code);
+            push(new Message(s, _tipo));
+        }
         public static void push(Message m)
         {
             m_message.Add(m);

@@ -1,7 +1,7 @@
 ﻿using GameServer.TYPE;
 using PangyaAPI.SQL.DATA.TYPE;
 using PangyaAPI.SQL;
-using PangyaAPI.SQL.TYPE;
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -38,15 +38,15 @@ namespace GameServer.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             var m_szConsulta = new string[] { "pangya.ProcGetDolfiniLockerInfo", "pangya.ProcGetDolfiniLockerItem" };
 
-            var r = procedure(_db, m_szConsulta[0], new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure(m_szConsulta[0], new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
 
             checkResponse(r, "nao conseguiu pegar o dolfini locker info do player: " + (m_uid));
 
-            var r2 = procedure(_db, m_szConsulta[1], new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
+            var r2 = procedure(m_szConsulta[1], new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
 
             checkResponse(r, "nao conseguiu pegar o dolfini locker item(ns) do player: " + (m_uid));
 

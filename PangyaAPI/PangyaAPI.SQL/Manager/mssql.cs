@@ -150,7 +150,7 @@ namespace PangyaAPI.SQL.Manager
                         result = new result_set((uint)result_set.STATE_TYPE.HAVE_DATA, numResults, numRows);
                         while (ret < numResults)
                         {
-                            for (i = 1; i < numResults; i++)
+                            for (i = 0; i < numResults; i++)
                             {
                                 result.addLine();   // Adiciona linha
                                 result.setRow(_data.Rows[i]);

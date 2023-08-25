@@ -11,6 +11,7 @@ using packet_func = GameServer.PACKET.packet_func;
 using static GameServer.TYPE.DefineConstants;
 using GameServer.Cmd;
 using GameServer.Session;
+using static GameServer.TYPE.PlayerInfoBase;
 
 namespace GameServer.Game
 {
@@ -26,7 +27,7 @@ namespace GameServer.Game
         public LoginTask createTask(ref Player _session, KeysOfLogin _kol, player_info _pi, object _gs)
         {
             if (getSize() == 2000)
-                throw new exception("[LoginManager.createTask][Error] Chegou ao limite task de login ao mesmo tempo");
+                throw new exception("[createTask][Error] Chegou ao limite task de login ao mesmo tempo");
 
             var task = new LoginTask(_session, _kol, _pi, _gs);
             task.exec();
@@ -51,7 +52,7 @@ namespace GameServer.Game
         {
             if (_arg == null)
             {
-                _smp.Message_Pool.push("[LoginManager.SQLDBResponse][Error] _arg is null na msg_id = " + (_msg_id));
+                _smp.Message_Pool.push("[SQLDBResponse][Error] _arg is null na msg_id = " + (_msg_id));
                 return;
             }
 
@@ -64,11 +65,11 @@ namespace GameServer.Game
 
                 // Verifica se a session ainda é valida, essas funções já é thread-safe
                 if (!task.getSession.Connected)
-                    throw new exception("[LoginManager.SQLDBResponse][Error] session is invalid, para tratar o pangya_db");
+                    throw new exception("[SQLDBResponse][Error] session is invalid, para tratar o pangya_db");
 
                 // Por Hora só sai, depois faço outro tipo de tratamento se precisar
                 if (_pangya_db.getException().getCodeError() != 0)
-                    throw new exception("[LoginManager.SQLDBResponse][Error] " + _pangya_db.getException().getFullMessageError());
+                    throw new exception("[SQLDBResponse][Error] " + _pangya_db.getException().getFullMessageError());
 
                 switch (_msg_id)
                 {
@@ -99,35 +100,35 @@ namespace GameServer.Game
                             packet_func.pacote1A9(ref p, task.getSession, 0/*milliseconds*/);
                             packet_func.session_send(ref p, task.getSession, 0); // Tempo para enviar um pacote, ant Bot
 
-                            snmdb.NormalManagerDB.add(5, new Cmd.CmdTutorialInfo(pi.uid), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(5, new CmdTutorialInfo(pi.uid), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(6, new Cmd.CmdCouponGacha(pi.uid), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(6, new CmdCouponGacha(pi.uid), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(7, new Cmd.CmdUserInfo(pi.uid), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(7, new CmdUserInfo(pi.uid), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(8, new Cmd.CmdGuildInfo(pi.uid, 0), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(8, new CmdGuildInfo(pi.uid, 0), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(9, new Cmd.CmdDolfiniLockerInfo(pi.uid), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(9, new CmdDolfiniLockerInfo(pi.uid), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(10, new Cmd.CmdCookie(pi.uid), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(10, new CmdCookie(pi.uid), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(11, new Cmd.CmdTrofelInfo(pi.uid, CmdTrofelInfo.TYPE.CURRENT), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(11, new CmdTrofelInfo(pi.uid, CmdTrofelInfo.TYPE.CURRENT), SQLDBResponse, task);
 
                             // Esses que estavam aqui coloquei no resposta do CmdUserEquip, por que eles precisam da resposta do User Equip
 
-                            snmdb.NormalManagerDB.add(16, new Cmd.CmdMyRoomConfig(pi.uid), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(16, new CmdMyRoomConfig(pi.uid), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(18, new Cmd.CmdCheckAchievement(task.getSession.m_pi.uid), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(18, new CmdCheckAchievement(task.getSession.m_pi.uid), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(20, new Cmd.CmdDailyQuestInfoUser(pi.uid, CmdDailyQuestInfoUser.TYPE.GET), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(20, new CmdDailyQuestInfoUser(pi.uid, CmdDailyQuestInfoUser.TYPE.GET), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(21, new Cmd.CmdCardInfo(pi.uid, CmdCardInfo.TYPE.ALL), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(21, new CmdCardInfo(pi.uid, CmdCardInfo.TYPE.ALL), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(22, new Cmd.CmdCardEquipInfo(pi.uid), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(22, new CmdCardEquipInfo(pi.uid), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(23, new Cmd.CmdTrophySpecial(pi.uid, CmdTrophySpecial.TYPE.CURRENT, CmdTrophySpecial.TYPE.NORMAL), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(23, new CmdTrophySpecial(pi.uid, CmdTrophySpecial.TYPE.CURRENT, CmdTrophySpecial.TYPE.NORMAL), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(24, new Cmd.CmdTrophySpecial(pi.uid, CmdTrophySpecial.TYPE.CURRENT, CmdTrophySpecial.TYPE.GRAND_PRIX), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(24, new CmdTrophySpecial(pi.uid, CmdTrophySpecial.TYPE.CURRENT, CmdTrophySpecial.TYPE.GRAND_PRIX), SQLDBResponse, task);
 
                             break;
                         }
@@ -148,7 +149,7 @@ namespace GameServer.Game
 
                             //    sPremiumSystem.updatePremiumUser(task.getSession);
 
-                            //    _smp.Message_Pool.push("[LoginManager.SQLDBResponse][Log] Player[UID=" + (pi.uid) + "] is Premium User");
+                            //    _smp.Message_Pool.push("[SQLDBResponse][Log] Player[UID=" + (pi.uid) + "] is Premium User");
                             //}
 
                             break;
@@ -186,21 +187,21 @@ namespace GameServer.Game
 
                             pi.ui = ((CmdUserInfo)(_pangya_db)).getInfo();    // cmd_ui.getInfo();
 
-                            snmdb.NormalManagerDB.add(26, new Cmd.CmdMapStatistics(task.getSession.m_pi.uid, CmdMapStatistics.TYPE_SEASON.CURRENT, CmdMapStatistics.TYPE.NORMAL, CmdMapStatistics.TYPE_MODO.M_NORMAL), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(26, new CmdMapStatistics(task.getSession.m_pi.uid, CmdMapStatistics.TYPE_SEASON.CURRENT, CmdMapStatistics.TYPE.NORMAL, CmdMapStatistics.TYPE_MODO.M_NORMAL), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(27, new Cmd.CmdMapStatistics(task.getSession.m_pi.uid, CmdMapStatistics.TYPE_SEASON.CURRENT, CmdMapStatistics.TYPE.ASSIST, CmdMapStatistics.TYPE_MODO.M_NORMAL), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(27, new CmdMapStatistics(task.getSession.m_pi.uid, CmdMapStatistics.TYPE_SEASON.CURRENT, CmdMapStatistics.TYPE.ASSIST, CmdMapStatistics.TYPE_MODO.M_NORMAL), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(28, new Cmd.CmdMapStatistics(task.getSession.m_pi.uid, CmdMapStatistics.TYPE_SEASON.CURRENT, CmdMapStatistics.TYPE.NORMAL, CmdMapStatistics.TYPE_MODO.M_NATURAL), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(28, new CmdMapStatistics(task.getSession.m_pi.uid, CmdMapStatistics.TYPE_SEASON.CURRENT, CmdMapStatistics.TYPE.NORMAL, CmdMapStatistics.TYPE_MODO.M_NATURAL), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(29, new Cmd.CmdMapStatistics(task.getSession.m_pi.uid, CmdMapStatistics.TYPE_SEASON.CURRENT, CmdMapStatistics.TYPE.ASSIST, CmdMapStatistics.TYPE_MODO.M_NATURAL), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(29, new CmdMapStatistics(task.getSession.m_pi.uid, CmdMapStatistics.TYPE_SEASON.CURRENT, CmdMapStatistics.TYPE.ASSIST, CmdMapStatistics.TYPE_MODO.M_NATURAL), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(30, new Cmd.CmdMapStatistics(task.getSession.m_pi.uid, CmdMapStatistics.TYPE_SEASON.CURRENT, CmdMapStatistics.TYPE.NORMAL, CmdMapStatistics.TYPE_MODO.M_GRAND_PRIX), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(30, new CmdMapStatistics(task.getSession.m_pi.uid, CmdMapStatistics.TYPE_SEASON.CURRENT, CmdMapStatistics.TYPE.NORMAL, CmdMapStatistics.TYPE_MODO.M_GRAND_PRIX), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(31, new Cmd.CmdMapStatistics(task.getSession.m_pi.uid, CmdMapStatistics.TYPE_SEASON.CURRENT, CmdMapStatistics.TYPE.ASSIST, CmdMapStatistics.TYPE_MODO.M_GRAND_PRIX), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(31, new CmdMapStatistics(task.getSession.m_pi.uid, CmdMapStatistics.TYPE_SEASON.CURRENT, CmdMapStatistics.TYPE.ASSIST, CmdMapStatistics.TYPE_MODO.M_GRAND_PRIX), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(36, new Cmd.CmdChatMacroUser(task.getSession.m_pi.uid), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(36, new CmdChatMacroUser(task.getSession.m_pi.uid), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(38, new Cmd.CmdFriendInfo(task.getSession.m_pi.uid), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(38, new CmdFriendInfo(task.getSession.m_pi.uid), SQLDBResponse, task);
 
                             break;
                         }
@@ -218,24 +219,24 @@ namespace GameServer.Game
                         {
                             task.getSession.m_pi.cookie = ((CmdCookie)(_pangya_db)).getCookie();    // cmd_cookie.getCookie();
 
-                            //snmdb.NormalManagerDB.add(32, new Cmd.CmdMailBoxInfo(task.getSession.m_pi.uid, CmdMailBoxInfo.NAO_LIDO), LoginManager.SQLDBResponse, task);
-                           // snmdb.NormalManagerDB.add(32, new Cmd.CmdMailBoxInfo2(task.getSession.m_pi.uid), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(32, new CmdMailBoxInfo(task.getSession.m_pi.uid, CmdMailBoxInfo.NAO_LIDO), SQLDBResponse, task);
+                           // snmdb.NormalManagerDB.add(32, new CmdMailBoxInfo2(task.getSession.m_pi.uid), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(33, new Cmd.CmdCaddieInfo(task.getSession.m_pi.uid, CmdCaddieInfo.TYPE.ONE), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(33, new CmdCaddieInfo(task.getSession.m_pi.uid, CmdCaddieInfo.TYPE.ONE), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(34, new Cmd.CmdMsgOffInfo(task.getSession.m_pi.uid), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(34, new CmdMsgOffInfo(task.getSession.m_pi.uid), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(35, new Cmd.CmdItemBuffInfo(task.getSession.m_pi.uid), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(35, new CmdItemBuffInfo(task.getSession.m_pi.uid), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(37, new Cmd.CmdLastPlayerGameInfo(task.getSession.m_pi.uid), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(37, new CmdLastPlayerGameInfo(task.getSession.m_pi.uid), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(39, new Cmd.CmdAttendanceRewardInfo(task.getSession.m_pi.uid), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(39, new CmdAttendanceRewardInfo(task.getSession.m_pi.uid), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(42, new Cmd.CmdGrandPrixClear(task.getSession.m_pi.uid), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(42, new CmdGrandPrixClear(task.getSession.m_pi.uid), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(43, new Cmd.CmdGrandZodiacPontos(task.getSession.m_pi.uid, CmdGrandZodiacPontos.eCMD_GRAND_ZODIAC_TYPE.CGZT_GET), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(43, new CmdGrandZodiacPontos(task.getSession.m_pi.uid, CmdGrandZodiacPontos.eCMD_GRAND_ZODIAC_TYPE.CGZT_GET), SQLDBResponse, task);
 
-                            //snmdb.NormalManagerDB.add(44, new Cmd.CmdLegacyTikiShopInfo(task.getSession.m_pi.uid), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(44, new CmdLegacyTikiShopInfo(task.getSession.m_pi.uid), SQLDBResponse, task);
 
                             break;
                         }
@@ -243,13 +244,13 @@ namespace GameServer.Game
                         {
                             task.getSession.m_pi.ti_current_season = ((CmdTrofelInfo)(_pangya_db)).getInfo();   // cmd_ti.getInfo();
 
-                            snmdb.NormalManagerDB.add(12, new CmdCharacterInfo(task.getSession.m_pi.uid, CmdCharacterInfo.TYPE.ALL), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(12, new CmdCharacterInfo(task.getSession.m_pi.uid, CmdCharacterInfo.TYPE.ALL), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(13, new CmdCaddieInfo(task.getSession.m_pi.uid, CmdCaddieInfo.TYPE.ALL), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(13, new CmdCaddieInfo(task.getSession.m_pi.uid, CmdCaddieInfo.TYPE.ALL), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(14, new CmdMascotInfo(task.getSession.m_pi.uid, CmdMascotInfo.TYPE.ALL), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(14, new CmdMascotInfo(task.getSession.m_pi.uid, CmdMascotInfo.TYPE.ALL), SQLDBResponse, task);
 
-                            snmdb.NormalManagerDB.add(15, new CmdWarehouseItem(task.getSession.m_pi.uid, CmdWarehouseItem.TYPE.ALL), LoginManager.SQLDBResponse, task);
+                            snmdb.NormalManagerDB.add(15, new CmdWarehouseItem(task.getSession.m_pi.uid, CmdWarehouseItem.TYPE.ALL), SQLDBResponse, task);
 
                             break;
                         }
@@ -364,7 +365,7 @@ namespace GameServer.Game
                             player_manager.checkWarehouse(task.getSession);
 
                             // Iterator
-                            SortedList<PlayerInfo.stIdentifyKey, UpdateItem> ui_ticket_report_scroll;
+                            SortedList<stIdentifyKey, UpdateItem> ui_ticket_report_scroll;
 
                             //Verifica se tem Ticket Report Scroll no update item para abrir ele e excluir. Todos que estiver, não só 1
                             //while ((ui_ticket_report_scroll = pi.findUpdateItemByTypeidAndType(TICKET_REPORT_SCROLL_TYPEID, UpdateItem.UI_TYPE.WAREHOUSE)) != pi.mp_ui.end())
@@ -382,11 +383,11 @@ namespace GameServer.Game
                             //    catch (exception e)
                             //    {
 
-                            //        _smp.Message_Pool.push("[LoginManager.checkWarehouse][ErrorSystem] " + e.getFullMessageError());
+                            //        _smp.Message_Pool.push("[checkWarehouse][ErrorSystem] " + e.getFullMessageError());
 
                             //        Session inválida
                             //        if (e.getCodeError() == STDA_ERROR_TYPE._ITEM_MANAGER)
-                            //            throw new exception("[LoginManager.SQLDBResponse][Error] " + e.getFullMessageError(), STDA_ERROR_TYPE.LOGIN_MANAGER);
+                            //            throw new exception("[SQLDBResponse][Error] " + e.getFullMessageError(), STDA_ERROR_TYPE.LOGIN_MANAGER);
                             //        else
                             //            throw;  // Relança
                             //    }
@@ -416,7 +417,7 @@ namespace GameServer.Game
 
                                 //}
                                 //else
-                                //    _smp.Message_Pool.push("[LoginManager.SQLDBResponse][Erro] player[UID=" + (pi.uid) + "] tentou inicializar ClubSet[TYPEID="
+                                //    _smp.Message_Pool.push("[SQLDBResponse][Erro] player[UID=" + (pi.uid) + "] tentou inicializar ClubSet[TYPEID="
                                 //            + (it.second._typeid) + ", ID=" + (it.second.id) + "] equipado, mas ClubSet Not exists on IFF_STRUCT do Server. Bug"));
 
                             }
@@ -446,7 +447,7 @@ namespace GameServer.Game
 
                                     //}
                                     //else
-                                    //    _smp.Message_Pool.push("[LoginManager.SQLDBResponse][Erro] player[UID=" + (pi.uid) + "] tentou inicializar ClubSet[TYPEID="
+                                    //    _smp.Message_Pool.push("[SQLDBResponse][Erro] player[UID=" + (pi.uid) + "] tentou inicializar ClubSet[TYPEID="
                                     //        + (it.second._typeid) + ", ID=" + (it.second.id) + "] equipado, mas ClubSet Not exists on IFF_STRUCT do Server. Bug"));
 
 
@@ -454,7 +455,7 @@ namespace GameServer.Game
                                 else
                                 {   // Não tem add o ClubSet padrão para ele(CV1)
 
-                                    //_smp.Message_Pool.push("[LoginManager.SQLDBResponse][WARNING] Player[UID=" + (pi.uid)
+                                    //_smp.Message_Pool.push("[SQLDBResponse][WARNING] Player[UID=" + (pi.uid)
                                     //        + "] nao tem o ClubSet[TYPEID=" + (AIR_KNIGHT_SET) + "] padrao.");
 
                                     //BuyItem bi;
@@ -488,13 +489,13 @@ namespace GameServer.Game
 
                                     //    }
                                     //    else
-                                    //        _smp.Message_Pool.push("[LoginManager.SQLDBResponse][Erro] player[UID=" + (pi.uid) + "] tentou inicializar ClubSet[TYPEID="
+                                    //        _smp.Message_Pool.push("[SQLDBResponse][Erro] player[UID=" + (pi.uid) + "] tentou inicializar ClubSet[TYPEID="
                                     //            + (it.second._typeid) + ", ID=" + (it.second.id) + "] equipado, mas ClubSet Not exists on IFF_STRUCT do Server. Bug"));
 
 
                                     //}
                                     //else
-                                    //    throw new exception("[LoginManager.SQLDBResponse][Error] Player[UID=" + (pi.uid)
+                                    //    throw new exception("[SQLDBResponse][Error] Player[UID=" + (pi.uid)
                                     //            + "] nao conseguiu adicionar o ClubSet[TYPEID=" + (AIR_KNIGHT_SET) + "] padrao para ele. Bug");
                                 }
 
@@ -520,7 +521,7 @@ namespace GameServer.Game
                                 else
                                 {   // não tem add a bola padrão para ele
 
-                                    //_smp.Message_Pool.push("[LoginManager.SQLDBResponse][WARNING] Player[UID=" + (pi.uid)
+                                    //_smp.Message_Pool.push("[SQLDBResponse][WARNING] Player[UID=" + (pi.uid)
                                     //        + "] nao tem a Comet(Ball)[TYPEID=" + (DEFAULT_COMET_TYPEID) + "] padrao.");
 
                                     //BuyItem bi;
@@ -540,7 +541,7 @@ namespace GameServer.Game
                                     //}
                                     //else
                                     //{
-                                    //    throw new exception("[LoginManager.SQLDBResponse][Error] Player[UID=" + (pi.uid)
+                                    //    throw new exception("[SQLDBResponse][Error] Player[UID=" + (pi.uid)
                                     //            + "] nao conseguiu adicionar a Comet(Ball)[TYPEID=" + (DEFAULT_COMET_TYPEID) + "] padrao para ele. Bug");
                                     //}
 
@@ -548,7 +549,7 @@ namespace GameServer.Game
                             }
 
                             // Premium Ticket Tem que ser chamado depois que o Warehouse Item ja foi carregado
-                            //snmdb.NormalManagerDB.add(4, new CmdPremiumTicketInfo(task.getSession.m_pi.uid), LoginManager.SQLDBResponse, task);
+                            //snmdb.NormalManagerDB.add(4, new CmdPremiumTicketInfo(task.getSession.m_pi.uid), SQLDBResponse, task);
 
                             break;
                         }
@@ -557,7 +558,7 @@ namespace GameServer.Game
 
                             task.getSession.m_pi.mrc = ((CmdMyRoomConfig)(_pangya_db)).getMyRoomConfig();   // cmd_mrc.getMyRoomConfig();
 
-                            // snmdb.NormalManagerDB.add(17, new CmdMyRoomItem(task.getSession.m_pi.uid, CmdMyRoomItem.TYPE.ALL), LoginManager.SQLDBResponse, task);
+                            // snmdb.NormalManagerDB.add(17, new CmdMyRoomItem(task.getSession.m_pi.uid, CmdMyRoomItem.TYPE.ALL), SQLDBResponse, task);
                             break;
                         }
                     case 17:    // MyRoom Item Info
@@ -588,7 +589,7 @@ namespace GameServer.Game
                             //else
                             //{
 
-                            //    snmdb.NormalManagerDB.add(19, new CmdAchievementInfo(task.getSession.m_pi.uid), LoginManager.SQLDBResponse, task);
+                            //    snmdb.NormalManagerDB.add(19, new CmdAchievementInfo(task.getSession.m_pi.uid), SQLDBResponse, task);
                             //}
                             break;
                         }
@@ -828,7 +829,7 @@ namespace GameServer.Game
             catch (exception e)
             {
 
-                _smp.Message_Pool.push("[LoginManager.SQLDBResponse][ErrorSystem] " + e.getFullMessageError());
+                _smp.Message_Pool.push("[SQLDBResponse][ErrorSystem] " + e.getFullMessageError());
 
                 if (e.getCodeError() == STDA_ERROR_TYPE.LOGIN_MANAGER)
                     // Finaliza a tarefa, sem enviar nada para o player por que não pode mais a session é inválida

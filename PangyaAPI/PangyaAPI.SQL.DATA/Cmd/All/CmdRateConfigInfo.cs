@@ -62,11 +62,11 @@ namespace PangyaAPI.SQL.DATA.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
-            //var r = consulta(_db, "SELECT pangya_server_list.[Name], pangya_server_list.[UID], pangya_server_list.[IP], pangya_server_list.[Port], pangya_server_list.MaxUser, pangya_server_list.CurrUser, pangya_server_list.property, pangya_server_list.AngelicWingsNum, pangya_server_list.EventFlag, pangya_server_list.EventMap, pangya_server_list.ImgNo, pangya_server_list.AppRate, pangya_server_list.ScratchRate FROM {0}.pangya_server_list WHERE pangya_server_list.[Type] = 1");
+            //var r = consulta( "SELECT pangya_server_list.[Name], pangya_server_list.[UID], pangya_server_list.[IP], pangya_server_list.[Port], pangya_server_list.MaxUser, pangya_server_list.CurrUser, pangya_server_list.property, pangya_server_list.AngelicWingsNum, pangya_server_list.EventFlag, pangya_server_list.EventMap, pangya_server_list.ImgNo, pangya_server_list.AppRate, pangya_server_list.ScratchRate FROM {0}.pangya_server_list WHERE pangya_server_list.[Type] = 1");
 
-             var r = procedure(_db, "pangya.ProcGetRateConfigInfo", new string[] { "@SERVER_UID" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_server_uid.ToString() }, ParameterDirection.Input);
+             var r = procedure("pangya.ProcGetRateConfigInfo", new string[] { "@SERVER_UID" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_server_uid.ToString() }, ParameterDirection.Input);
 
             checkResponse(r, "nao conseguiu pegar o Rate Config Info do Server[UID=" + (m_server_uid) + "].");
             return r;

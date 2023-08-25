@@ -43,13 +43,13 @@ namespace PangyaAPI.SQL.DATA.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             if (m_server_uid == 0 || m_server_uid == -1)
                 throw new Exception("[CmdAuthServerKey::prepareConsulta][Error] m_server_uid is invalid(zero).");
 
 
-            var r = consulta(_db, "SELECT server_uid, 'key', VALID FROM pangya.pangya_auth_key WHERE server_uid =" + m_server_uid);
+            var r = consulta( "SELECT server_uid, 'key', VALID FROM pangya.pangya_auth_key WHERE server_uid =" + m_server_uid);
 
             checkResponse(r, "nao conseguiu pegar o Auth Server Key do Server[UID=" + (m_server_uid) + "]");
             return r;

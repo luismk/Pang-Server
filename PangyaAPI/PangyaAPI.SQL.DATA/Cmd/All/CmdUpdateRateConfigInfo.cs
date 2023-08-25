@@ -29,14 +29,14 @@ namespace PangyaAPI.SQL.DATA.Cmd
            
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
 
             if (m_server_uid == 0u)
                 throw new Exception("[CmdUpdateRateConfigInfo][Error] server_uid[VALUE=" + (m_server_uid) + "] is invalid.");
-            //var r = consulta(_db, "SELECT pangya_server_list.[Name], pangya_server_list.[UID], pangya_server_list.[IP], pangya_server_list.[Port], pangya_server_list.MaxUser, pangya_server_list.CurrUser, pangya_server_list.property, pangya_server_list.AngelicWingsNum, pangya_server_list.EventFlag, pangya_server_list.EventMap, pangya_server_list.ImgNo, pangya_server_list.AppRate, pangya_server_list.ScratchRate FROM {0}.pangya_server_list WHERE pangya_server_list.[Type] = 1");
+            //var r = consulta( "SELECT pangya_server_list.[Name], pangya_server_list.[UID], pangya_server_list.[IP], pangya_server_list.[Port], pangya_server_list.MaxUser, pangya_server_list.CurrUser, pangya_server_list.property, pangya_server_list.AngelicWingsNum, pangya_server_list.EventFlag, pangya_server_list.EventMap, pangya_server_list.ImgNo, pangya_server_list.AppRate, pangya_server_list.ScratchRate FROM {0}.pangya_server_list WHERE pangya_server_list.[Type] = 1");
 
-            var r = procedure(_db, "pangya.ProcUpdateRateConfigInfo", new string[] { "@SERVER_UID", "@GRAND_ZODIAC_EVENT", "@SCRATCHY", "@PAPEL_SHOP_RARE_ITEM", "@PAPEL_SHOP_COOKIE_ITEM", "@TREASURE", "@PANG", "@EXP", "@CLUB_MASTERY", "@CHUVA", "@MEMORIAL_SHOP", "@ANGEL_EVENT", "@GRAND_PRIX_EVENT", "@GOLDEN_TIME_EVENT", "@LOGIN_REWARD_EVENT", "@BOT_GM_EVENT", "@SMART_CALCULATOR" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.Int, type_SqlDbType.SmallInt,
+            var r = procedure("pangya.ProcUpdateRateConfigInfo", new string[] { "@SERVER_UID", "@GRAND_ZODIAC_EVENT", "@SCRATCHY", "@PAPEL_SHOP_RARE_ITEM", "@PAPEL_SHOP_COOKIE_ITEM", "@TREASURE", "@PANG", "@EXP", "@CLUB_MASTERY", "@CHUVA", "@MEMORIAL_SHOP", "@ANGEL_EVENT", "@GRAND_PRIX_EVENT", "@GOLDEN_TIME_EVENT", "@LOGIN_REWARD_EVENT", "@BOT_GM_EVENT", "@SMART_CALCULATOR" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.Int, type_SqlDbType.SmallInt,
                     type_SqlDbType.Int, type_SqlDbType.SmallInt,
                     type_SqlDbType.SmallInt, type_SqlDbType.SmallInt,
                     type_SqlDbType.SmallInt, type_SqlDbType.SmallInt,

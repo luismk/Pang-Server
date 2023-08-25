@@ -1,7 +1,7 @@
 ﻿using GameServer.TYPE;
 using PangyaAPI.SQL.DATA.TYPE;
 using PangyaAPI.SQL;
-using PangyaAPI.SQL.TYPE;
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -98,9 +98,9 @@ namespace GameServer.Cmd
             return m_mi;
         }
 
-        protected override Response prepareConsulta(database input_db)
+        protected override Response prepareConsulta()
         {
-            var r = procedure(_db, "pangya.ProcGetUserInfo", new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcGetUserInfo", new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
             checkResponse(r, "nao conseguiu pegar o member info do player: " + (m_uid));
             return r;
         }

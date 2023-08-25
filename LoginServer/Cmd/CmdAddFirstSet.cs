@@ -30,9 +30,9 @@ namespace LoginServer.Cmd
             // N�o usa por que � um UPDATE
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
-            var r = procedure(_db, "pangya.ProcFirstSet", new string[] {"@IDUSER"}, new type_SqlDbType[] {type_SqlDbType.Int}, new string[] {m_uid.ToString()}, ParameterDirection.Input);
+            var r = procedure("pangya.ProcFirstSet", new string[] {"@IDUSER"}, new type_SqlDbType[] {type_SqlDbType.Int}, new string[] {m_uid.ToString()}, ParameterDirection.Input);
             checkResponse(r, "nao conseguiu add first set do player: " + m_uid);
             return r;
         }

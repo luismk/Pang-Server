@@ -32,13 +32,13 @@ namespace PangyaAPI.SQL.DATA.Cmd
             return;
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             if (string.IsNullOrEmpty(m_ip) || string.IsNullOrEmpty(m_mask))
                 throw new Exception("[CmdInsertBlockIP::prepareConsulta][Error] m_ip[" + m_ip + "] or m_mask["
             + m_mask + "] is invalid");
 
-            var r = procedure(_db, "pangya.ProcInsertBlocIP", new string[] { "@IP" }, new type_SqlDbType[] { type_SqlDbType.NVarChar },
+            var r = procedure("pangya.ProcInsertBlocIP", new string[] { "@IP" }, new type_SqlDbType[] { type_SqlDbType.NVarChar },
                 new string[] { m_ip }, ParameterDirection.Input);
 
             checkResponse(r, "nao conseguiu inserir um Block IP[IP=" + m_ip + ", MASK=" + m_mask + "]");

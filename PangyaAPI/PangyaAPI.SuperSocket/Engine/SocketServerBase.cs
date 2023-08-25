@@ -73,7 +73,9 @@ namespace PangyaAPI.SuperSocket.Engine
 
                     //if (log.IsDebugEnabled)
                     //{
+#if _RELEASE
                     _smp.Message_Pool.push(string.Format("Listener ({0}) was started", listener.EndPoint));
+#endif
                     //}
                 }
                 else //If one listener failed to start, stop started listeners

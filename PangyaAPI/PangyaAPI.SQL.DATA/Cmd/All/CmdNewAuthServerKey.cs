@@ -40,13 +40,13 @@ namespace PangyaAPI.SQL.DATA.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             if (m_server_uid == 0 || m_server_uid == -1)
                 throw new Exception("[CmdNewAuthServerKey::prepareConsulta][Error] m_server_uid is invalid(zero).");
 
 
-            var r = procedure(_db, "pangya.ProcGetNewAuthServerKey", new string[] { "@UID" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_server_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcGetNewAuthServerKey", new string[] { "@UID" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_server_uid.ToString() }, ParameterDirection.Input);
 
             checkResponse(r, "Server[UID=" + (m_server_uid) + "] nao conseguiu gerar uma nova key para o Auth Server");
             return r;

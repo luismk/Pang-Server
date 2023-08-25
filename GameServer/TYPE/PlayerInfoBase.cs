@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static GameServer.TYPE.DefineConstants;
-using static PangyaAPI.Network.Packet.func_arr;
-
 namespace GameServer.TYPE
 {
     public abstract class PlayerInfoBase : player_info

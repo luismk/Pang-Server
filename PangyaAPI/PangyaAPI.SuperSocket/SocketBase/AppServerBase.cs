@@ -492,41 +492,37 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// </returns>
         public virtual bool Start()
         {
-            var origStateCode = Interlocked.CompareExchange(ref m_StateCode, ServerStateConst.Starting, ServerStateConst.NotStarted);
-
-            if (origStateCode != ServerStateConst.NotStarted)
-            {
-                if (origStateCode < ServerStateConst.NotStarted)
-                    throw new Exception("You cannot start a server instance which has not been setup yet.");
-
-                _smp.Message_Pool.push(string.Format("This server instance is in the state {0}, you cannot start it now.", (ServerState)origStateCode));
-
-                return false;
-            }
-
-            if (!m_SocketServer.Start())
-            {
-                m_StateCode = ServerStateConst.NotStarted;
-                return false;
-            }
-
-            StartedTime = DateTime.Now;
-            m_StateCode = ServerStateConst.Running;
             try
             {
+                var origStateCode = Interlocked.CompareExchange(ref m_StateCode, ServerStateConst.Starting, ServerStateConst.NotStarted);
+
+                if (origStateCode != ServerStateConst.NotStarted)
+                {
+                    if (origStateCode < ServerStateConst.NotStarted)
+                        throw new Exception("You cannot start a server instance which has not been setup yet.");
+
+                    _smp.Message_Pool.push(string.Format("This server instance is in the state {0}, you cannot start it now.", (ServerState)origStateCode));
+
+                    return false;
+                }
+
+                if (!m_SocketServer.Start())
+                {
+                    m_StateCode = ServerStateConst.NotStarted;
+                    return false;
+                }
+
+                StartedTime = DateTime.Now;
+                m_StateCode = ServerStateConst.Running;
                 OnStartup();
                 OnStarted();
+                _smp.Message_Pool.push(string.Format("[AppServer::Start][Log]: The server instance {0} has been started!", Name));
+                Console.Title = Name;
             }
             catch (Exception e)
             {
-                _smp.Message_Pool.push("[AppServer::Start()][LogException]: One exception wa thrown in the method 'OnStartup()'.", e);
-            }
-            finally
-            {
-
-                _smp.Message_Pool.push(string.Format("[AppServer::Start()][Log]: The server instance {0} has been started!", Name));
-            }
-
+                _smp.Message_Pool.push("[AppServer::Start][LogException]: One exception wa thrown in the method 'OnStartup()'.", e);
+            }           
             return true;
         }
 
@@ -535,7 +531,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// </summary>
         protected virtual void OnStartup()
         {
-            _smp.Message_Pool.push("[AppServer.OnStartup][Log]: Server starting...", _smp.type_msg.CL_ONLY_CONSOLE);
+            _smp.Message_Pool.push("[AppServer::OnStartup][Log]: Server starting...", _smp.type_msg.CL_ONLY_CONSOLE);
         }
 
         /// <summary>
@@ -543,7 +539,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// </summary>
         protected virtual void OnStarted()
         {
-            _smp.Message_Pool.push("[AppServer.OnStarted][Log]: Start Server in Port: " + m_si.Port, _smp.type_msg.CL_ONLY_CONSOLE);
+            _smp.Message_Pool.push("[AppServer::OnStarted][Log]: Start Server in Port: " + m_si.Port, _smp.type_msg.CL_ONLY_CONSOLE);
             NormalManagerDB.create(26);
         }
 
@@ -552,7 +548,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// </summary>
         protected virtual void OnStopped()
         {
-            _smp.Message_Pool.push("[AppServer.OnStopped][Log]: Server Stopped Mode: " + m_si.Port, _smp.type_msg.CL_ONLY_CONSOLE);
+            _smp.Message_Pool.push("[AppServer::OnStopped][Log]: Server Stopped Mode: " + m_si.Port, _smp.type_msg.CL_ONLY_CONSOLE);
         }
 
         /// <summary>
@@ -766,12 +762,12 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// <returns></returns>
         IAppSession IAppServer.CreateAppSession(ISocketSession socketSession)
         {
-            if (!ExecuteConnectionFilters(socketSession.RemoteEndPoint))
-            {
-                socketSession.Close(reason: CloseReason.SocketError);
-                return NullAppSession;
+            //if (!ExecuteConnectionFilters(socketSession.RemoteEndPoint))
+            //{
+            //    socketSession.Close(reason: CloseReason.SocketError);
+            //    return NullAppSession;
             
-            }
+            //}
             var appSession = CreateAppSession(socketSession);
             appSession.Initialize(this, socketSession);
             NextConnectionID++;
@@ -856,25 +852,15 @@ namespace PangyaAPI.SuperSocket.SocketBase
         }
 
         /// <summary>
-        /// Resets the session's security protocol.
-        /// </summary>
-        /// <param name="session">The session.</param>
-        /// <param name="security">The security protocol.</param>
-        public void ResetSessionSecurity(IAppSession session, SslProtocols security)
-        {
-            m_SocketServer.ResetSessionSecurity(session, security);
-        }
-
-        /// <summary>
         /// Called when [socket session closed].
         /// </summary>
         /// <param name="session">The socket session.</param>
         /// <param name="reason">The reason.</param>
         private void OnSocketSessionClosed(ISocketSession session, CloseReason reason)
         {
-            #region _RELEASE
+#if _RELEASE
             _smp.Message_Pool.push(string.Format("[AppServer::OnSocketSessionClosed][Log]: This session was closed for {0}!", reason));
-            #endregion
+#endif
             var appSession = session.AppSession as TAppSession;
             appSession.Connected = false;
             OnSessionClosed(appSession, reason);

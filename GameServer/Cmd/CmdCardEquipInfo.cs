@@ -14,7 +14,7 @@ namespace GameServer.Cmd
         {
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             return null;
         }

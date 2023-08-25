@@ -43,7 +43,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             if (string.IsNullOrEmpty(m_nick))
                 throw new Exception("[CmdVerify::prepareConsulta][Error] Nick invalid");
@@ -51,7 +51,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
             m_check = false;
             m_uid = 0;
 
-            var r = procedure(_db, "pangya.ProcVerifyNickname", new string[] { "@NICKNAME" }, new type_SqlDbType[] { type_SqlDbType.VarChar }, new string[] { m_nick }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcVerifyNickname", new string[] { "@NICKNAME" }, new type_SqlDbType[] { type_SqlDbType.VarChar }, new string[] { m_nick }, ParameterDirection.Input);
 
             checkResponse(r, "nao conseguiu verificar se existe o nick: " + m_nick);
             return r;

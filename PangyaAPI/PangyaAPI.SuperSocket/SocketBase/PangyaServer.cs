@@ -5,7 +5,6 @@ using System;
 
 namespace PangyaAPI.SuperSocket.SocketBase
 {
-
     public abstract partial class PangyaServer<T> : AppServer<T, PangyaRequestInfo>
      where T : AppSession<T, PangyaRequestInfo>, IAppSession, new()
     {
@@ -18,6 +17,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
                     ConfigInit();
                     IFF = new IFFHandle("data//pangya_gb.iff");
                 }
+                NewRequestReceived += ProcessNewMessage;
             }
             catch (Exception ex)
             {
@@ -65,18 +65,18 @@ namespace PangyaAPI.SuperSocket.SocketBase
         protected override void OnNewSessionConnected(T session)
         {
             onAcceptCompleted(session);
-            NewRequestReceived += ProcessNewMessage;
             if (session.Connected)
             {
-                WriteConsole.WriteLine($"[Player::Connected][Log] ID => {session.m_oid}, Connection => {session?.GetAdress}", ConsoleColor.Green);
+                WriteConsole.WriteLine($"[AppServer::onAcceptCompleted][Log] Player[OID => {session?.m_oid}, ID => {session?.GetID()}, Connection => {session?.GetAdress}]", ConsoleColor.Red);
             }
             m_si.Curr_User = SessionCount;
+            base.OnNewSessionConnected(session);
         }
 
         protected override void OnSessionClosed(T session, CloseReason reason = CloseReason.ClientClosing)
         {
             base.OnSessionClosed(session, reason);
-            WriteConsole.WriteLine($"[Player::Disconnected][Log] ID => {session?.m_oid}, Connection => {session?.GetAdress}", ConsoleColor.Red);
+            WriteConsole.WriteLine($"[Player::Disconnected][Log] Player[OID => {session?.m_oid}, ID => {session?.GetID()}, Connection => {session?.GetAdress}]", ConsoleColor.Red);
             m_si.Curr_User = SessionCount;
         }
     }

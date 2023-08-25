@@ -59,7 +59,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
             if (_tipo < MAX_CALL_FUNC_ARR)
             {
                 m_func[_tipo].cf = _func;
-#if DEBUG
+#if RELEASE
                 _smp.Message_Pool.push(("Adicionou Packet Function Call com sucesso."));
 #endif
             }

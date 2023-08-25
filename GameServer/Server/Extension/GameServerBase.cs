@@ -15,10 +15,11 @@ using packet = PangyaAPI.SuperSocket.SocketBase.Packet;
 using static PangyaAPI.Utilities.Tools;
 using GameServer.Game;
 using PangyaAPI.SuperSocket.Interface;
+using PangyaAPI.SuperSocket.SocketBase;
 
 namespace GameServer.Server.Extension
 {
-    public class GameServerBase : PangyaAPI.SuperSocket.SocketBase.PangyaServer<Player>
+    public class GameServerBase : PangyaServer<Player>
 	{
 		private int m_GameGuardAuth;
 
@@ -218,26 +219,24 @@ namespace GameServer.Server.Extension
 				// Player info da session e vai guardar os valores recuperados do banco de dados
 				PlayerInfo pi = (_session.m_pi);
 
-				//////////// ----------------------- Começa a ler o packet que o cliente enviou ------------------------- \\\\\\\\\\\/
-				var loginresult = new LoginData();
-                _packet.ReadObject(loginresult);
+                //////////// ----------------------- Começa a ler o packet que o cliente enviou ------------------------- \\\\\\\\\\\
+                // Read Packet Client request
+                _pi.id =_packet.ReadString();
+                _pi.uid = _packet.ReadUInt32();
+               var ntKey = _packet.ReadUInt32(); // ntKey
+               var Command = _packet.ReadUInt16();
+                kol.keys[0] = _packet.ReadString();
+                client_version = _packet.ReadString();
+                packet_version = _packet.ReadUInt32();
+                string mac_address = _packet.ReadString();
+                kol.keys[1] = _packet.ReadString();
+                // -------------- Finished reading the packet sent by the client ---------------
 
 
-				_pi.uid = loginresult.UID;
-				_pi.id = loginresult.UserName;
-				client_version = loginresult.Version;
+                ////////////----------------------- Terminou a leitura do packet que o cliente enviou -------------------------\\\\\\\\\\\/
 
-				kol.keys[0] = loginresult.AuthKey_Login;
-				kol.keys[1] = loginresult.AuthKey_Game;
-				packet_version = loginresult.CheckUnknow2;
-
-
-				string mac_address = "";
-
-				////////////----------------------- Terminou a leitura do packet que o cliente enviou -------------------------\\\\\\\\\\\/
-
-				// Verifica aqui se o IP/MAC ADDRESS do player está bloqueado
-				if (haveBanList(_session.getIP(), mac_address, !mac_address.empty()))
+                // Verifica aqui se o IP/MAC ADDRESS do player está bloqueado
+                if (haveBanList(_session.getIP(), mac_address, !mac_address.empty()))
 					throw new exception("[game_server::requestLogin][Error] Player[UID=" + (_pi.uid) + ", IP="
 							+ _session.getIP() + ", MAC=" + mac_address + "] esta bloqueado por regiao IP/MAC Addrress.");
 
@@ -314,7 +313,7 @@ namespace GameServer.Server.Extension
 				}
 
 				// Check packet version
-				_packet.Version_Decrypt(packet_version);
+				_packet.Version_Decrypt(@packet_version);
 
 
 				//// Se a flag do canSameIDLogin estiver ativo, não verifica packet
@@ -380,7 +379,7 @@ namespace GameServer.Server.Extension
 				//	}
 
 				// Member Info
-				var cmd_mi = new Cmd.CmdMemberInfo(pi.uid);    // Waiter
+				var cmd_mi = new CmdMemberInfo(pi.uid);    // Waiter
 
 				snmdb.NormalManagerDB.add(0, cmd_mi, null, null);
 
@@ -707,9 +706,23 @@ namespace GameServer.Server.Extension
 		// Make Bot GM Event Room
 		public virtual void makeBotGMEventRoom() { }
 
-        protected override void onAcceptCompleted(Player session)
+        protected override void onAcceptCompleted(Player _session)
         {
-            
+            try
+            {
+                var packet = new packet(0x3F);	// Tipo Packet Game Server initial packet no compress e no crypt
+
+                packet.AddByte(1);	// OPTION 1
+                packet.AddByte(1);	// OPTION 2
+                packet.AddByte(_session.m_key);	// Key
+                packet.MakeRaw();
+                var mb = packet.GetMakedBuf().Buffin();
+                _session.Send(mb);
+            }
+            catch (Exception ex)
+            {
+                _smp.Message_Pool.push(ex.Message, "AppServer::onAcceptCompleted", 808);
+            }
         }
     }
 }

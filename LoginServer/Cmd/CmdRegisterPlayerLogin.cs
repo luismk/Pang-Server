@@ -35,9 +35,9 @@ namespace LoginServer.Cmd
             return;
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
-            var r = procedure(_db, "pangya.ProcRegisterLogin", new string[] { "@IDUSER", "@IP", "@SrvID" }, new type_SqlDbType[] { type_SqlDbType.Int , type_SqlDbType.NVarChar, type_SqlDbType.NVarChar }, new string[] { m_uid.ToString(), m_ip, m_server_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcRegisterLogin", new string[] { "@IDUSER", "@IP", "@SrvID" }, new type_SqlDbType[] { type_SqlDbType.Int , type_SqlDbType.NVarChar, type_SqlDbType.NVarChar }, new string[] { m_uid.ToString(), m_ip, m_server_uid.ToString() }, ParameterDirection.Input);
             checkResponse(r, "nao conseguiu registrar o login do player: " + (m_uid).ToString() + ", IP: " + m_ip);
             return r;
         }

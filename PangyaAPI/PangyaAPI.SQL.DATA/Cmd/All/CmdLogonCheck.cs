@@ -42,12 +42,11 @@ namespace PangyaAPI.SQL.DATA.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             m_check = false;
             m_server_uid = 0;
-
-            var r = consulta(_db, "SELECT LOGON, game_server_id FROM pangya.account WHERE UID = " + m_uid);
+            var r = consulta("SELECT LOGON, game_server_id FROM pangya.account WHERE UID = " + m_uid);
             checkResponse(r, "nao conseguiu verificar o logon do player: " + (m_uid));
             return r;
         }

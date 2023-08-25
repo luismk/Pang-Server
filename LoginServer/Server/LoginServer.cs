@@ -8,7 +8,7 @@ using PangyaAPI.SuperSocket.SocketBase;
 using LoginServer.Session;
 using PangyaAPI.SuperSocket.Engine;
 using LoginServer.PacketFunc;
-
+using snmdb = PangyaAPI.SQL.Manager;
 namespace LoginServer.ServerTcp
 {
     public class LoginServerTcp : PangyaServer<Player>
@@ -16,7 +16,7 @@ namespace LoginServer.ServerTcp
         public int m_access_flag { get; private set; }
         public int m_create_user_flag { get; private set; }
         public int m_same_id_login_flag { get; private set; }
-        public LoginServerTcp() 
+        public LoginServerTcp()
         {
             addPacketCall(0x01, new Action<ParamDispatch>(packet_func_ls.packet001));
             addPacketCall(0x03, new Action<ParamDispatch>(packet_func_ls.packet003));
@@ -26,12 +26,7 @@ namespace LoginServer.ServerTcp
             addPacketCall(0x08, new Action<ParamDispatch>(packet_func_ls.packet008));
             addPacketCall(0x0B, new Action<ParamDispatch>(packet_func_ls.packet00B));
         }
-        protected override void OnStarted()
-        {
-            _smp.Message_Pool.push("[Server.OnStarted][Log]: Server starting...", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
-            base.OnStarted();
-        }
-
+       
         public override void ConfigInit()
         {
             base.ConfigInit();
@@ -73,7 +68,8 @@ namespace LoginServer.ServerTcp
         {
             return m_same_id_login_flag == 1;
         }
-        public void requestLogin(Packet p, Player _session)
+
+        public void RequestLogin(Packet p, Player _session)
         {
 
             /// Pacote01 Option 0x0F(15) é manutenção
@@ -83,32 +79,30 @@ namespace LoginServer.ServerTcp
 
 
                 // Ler dados do packet de login
-                var result = new LoginData();
-                
-                p.ReadObject(@result);
+                var result = (LoginData)p.ReadObject(new LoginData());
 
                 //  Verify Id is valid
                 if (result.id.size() < 2 || System.Text.RegularExpressions.Regex.Match(result.id, (".*[\\^$&,\\?`´~\\|\"@#¨'%*!\\\\].*")).Success)
-                    throw new exception("[login_server::requestLogin][Error] ID(" + result.id
+                    throw new exception("[login_server::RequestLogin][Error] ID(" + result.id
                             + ") invalid, less then 2 characters or invalid character include in id.", STDA_ERROR_TYPE.LOGIN_SERVER);
 
                 // Password to MD5
-                var pass_md5 = result.password;
+                var pass_md5 = Tools.MD5Hash(result.password).ToUpper();
 
-                try
-                {
+                //try
+                //{
 
-                    pass_md5 = result.password.size() < 32 ? Tools.MD5Hash(result.password) : result.password;
+                //   pass_md5 = result.password.size() < 32 ? Tools.MD5Hash(result.password) : result.password;
 
-                }
-                catch (exception e)
-                {
+                //}
+                //catch (exception e)
+                //{
 
-                    _smp.Message_Pool.push("[login_server::requestLogin][ErrorSystem] " + e.getFullMessageError(), _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
+                //    _smp.Message_Pool.push("[login_server::RequestLogin][ErrorSystem] " + e.getFullMessageError(), _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
-                    // Relança
-                    throw;
-                }
+                //    // Relança
+                //    throw;
+                //}
 
 #if _RELEASE
 
@@ -133,6 +127,8 @@ namespace LoginServer.ServerTcp
 
                     var cmd_verifyId = new CmdVerifyID(result.id); // ID
 
+                    snmdb::NormalManagerDB.add(0, cmd_verifyId, null, null);
+
                     cmd_verifyId.waitEvent();
 
                     if (cmd_verifyId.getException().getCodeError() != 0)
@@ -142,6 +138,8 @@ namespace LoginServer.ServerTcp
                     {   // Verifica se o ID existe
 
                         var cmd_verifyPass = new CmdVerifyPass(cmd_verifyId.getUID(), pass_md5); // PASSWORD
+
+                        snmdb::NormalManagerDB.add(0, cmd_verifyPass, null, null);
 
                         cmd_verifyPass.waitEvent();
 
@@ -153,18 +151,25 @@ namespace LoginServer.ServerTcp
 
                             var cmd_pi = new CmdPlayerInfo(cmd_verifyId.getUID());
 
+                            snmdb::NormalManagerDB.add(0, cmd_pi, null, null);
+
 
                             cmd_pi.waitEvent();
 
                             if (cmd_pi.getException().getCodeError() != 0)
                                 throw cmd_pi.getException();
 
-                            _session.m_pi =cmd_pi.getInfo();
+                            _session.m_pi = cmd_pi.getInfo();
                             var pi = _session.m_pi;
 
                             var cmd_lc = new CmdLogonCheck(pi.uid);
                             var cmd_flc = new CmdFirstLoginCheck(pi.uid);
                             var cmd_fsc = new CmdFirstSetCheck(pi.uid);
+
+                            snmdb::NormalManagerDB.add(0, cmd_lc, null, null);
+                            snmdb::NormalManagerDB.add(0, cmd_flc, null, null);
+                            snmdb::NormalManagerDB.add(0, cmd_fsc, null, null);
+
 
                             cmd_lc.waitEvent();
 
@@ -194,7 +199,7 @@ namespace LoginServer.ServerTcp
 
                                 packet_func_ls.session_send(p, _session, 0);
 
-                                _smp.Message_Pool.push("[login_server::requestLogin][Log] player[UID="
+                                _smp.Message_Pool.push("[login_server::RequestLogin][Log] player[UID="
                                         + (pi.uid) + ", ID=" + (pi.id) + ", IP=" + _session.GetAdress + "] ja tem outro Player conectado[UID=" + (player_logado.GetUID())
                                         + ", OID=" + (player_logado.m_oid) + ", IP=" + player_logado.GetAdress + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
@@ -210,7 +215,7 @@ namespace LoginServer.ServerTcp
                                 packet_func_ls.session_send(p, _session, 0);
 
                                 if (pi.m_state++ >= 3)  // Ataque, derruba a conexão maliciosa
-                                    _smp.Message_Pool.push("[login_server::requestLogin][Log] Player ja esta logado, o pacote de logar ja foi enviado, player[UID="
+                                    _smp.Message_Pool.push("[login_server::RequestLogin][Log] Player ja esta logado, o pacote de logar ja foi enviado, player[UID="
                                             + (pi.uid) + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                             }
@@ -235,7 +240,7 @@ namespace LoginServer.ServerTcp
 
                                     packet_func_ls.session_send(p, _session, 0);
 
-                                    _smp.Message_Pool.push("[login_server::requestLogin][Log] acesso restrito para o player [UID=" + (pi.uid)
+                                    _smp.Message_Pool.push("[login_server::RequestLogin][Log] acesso restrito para o player [UID=" + (pi.uid)
                                             + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                                 }
@@ -257,7 +262,7 @@ namespace LoginServer.ServerTcp
 
                                         packet_func_ls.session_send(p, _session, 0);
 
-                                        _smp.Message_Pool.push("[login_server::requestLogin][Log] Bloqueado por tempo[Time="
+                                        _smp.Message_Pool.push("[login_server::RequestLogin][Log] Bloqueado por tempo[Time="
                                                 + (pi.block_flag.m_id_state.block_time == -1 ? ("indeterminado") : ((pi.block_flag.m_id_state.block_time / 60)
                                                 + "min " + (pi.block_flag.m_id_state.block_time % 60) + "sec"))
                                                 + "]. player [UID=" + (pi.uid) + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
@@ -273,7 +278,7 @@ namespace LoginServer.ServerTcp
 
                                         packet_func_ls.session_send(p, _session, 0);
 
-                                        _smp.Message_Pool.push("[login_server::requestLogin][Log] Bloqueado permanente. player [UID=" + (pi.uid)
+                                        _smp.Message_Pool.push("[login_server::RequestLogin][Log] Bloqueado permanente. player [UID=" + (pi.uid)
                                                 + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                                     }
@@ -292,7 +297,7 @@ namespace LoginServer.ServerTcp
                                         p.AddInt32(500012);     // Ban por Região;
 
                                         packet_func_ls.session_send(p, _session, 0);
-                                        _smp.Message_Pool.push("[login_server::requestLogin][Log] Player[UID=" + (_session.m_pi.uid)
+                                        _smp.Message_Pool.push("[login_server::RequestLogin][Log] Player[UID=" + (_session.m_pi.uid)
                                                 + ", IP=" + (_session.m_ip) + "] Block ALL IP que o player fizer login.", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                                     }
@@ -313,7 +318,7 @@ namespace LoginServer.ServerTcp
 
                                         packet_func_ls.session_send(p, _session, 0);
 
-                                        _smp.Message_Pool.push("[login_server::requestLogin][Log] Player[UID=" + (_session.m_pi.uid)
+                                        _smp.Message_Pool.push("[login_server::RequestLogin][Log] Player[UID=" + (_session.m_pi.uid)
                                                 + ", IP=" + (_session.m_ip) + ", MAC=" + result.mac_address + "] Block MAC Address que o player fizer login.", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                                     }
@@ -325,7 +330,7 @@ namespace LoginServer.ServerTcp
 
                                         FIRST_LOGIN(_session);
 
-                                        _smp.Message_Pool.push("[login_server::requestLogin][Log] Primeira vez que o player loga. player[UID=" + (pi.uid)
+                                        _smp.Message_Pool.push("[login_server::RequestLogin][Log] Primeira vez que o player loga. player[UID=" + (pi.uid)
                                                 + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                                     }
@@ -337,7 +342,7 @@ namespace LoginServer.ServerTcp
 
                                         FIRST_SET(_session);
 
-                                        _smp.Message_Pool.push("[login_server::requestLogin][Log] Primeira vez que o player escolhe um character padrao. player[UID="
+                                        _smp.Message_Pool.push("[login_server::RequestLogin][Log] Primeira vez que o player escolhe um character padrao. player[UID="
                                                 + (pi.uid) + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                                     }
@@ -357,7 +362,7 @@ namespace LoginServer.ServerTcp
 
                                         packet_func_ls.session_send(p, _session, 0);
 
-                                        _smp.Message_Pool.push("[login_server::requestLogin][Log] Player ja esta logado no game server. player[UID="
+                                        _smp.Message_Pool.push("[login_server::RequestLogin][Log] Player ja esta logado no game server. player[UID="
                                                 + (pi.uid) + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                                     }
@@ -367,9 +372,9 @@ namespace LoginServer.ServerTcp
                                         // Authorized a ficar online no server por tempo indeterminado
                                         _session.m_is_authorized = 1;
 
-                                        SUCCESS_LOGIN("requestLogin", _session);
+                                        SUCCESS_LOGIN("RequestLogin", _session);
 
-                                        _smp.Message_Pool.push("[login_server::requestLogin][Log] GM logou[UID=" + (pi.uid)
+                                        _smp.Message_Pool.push("[login_server::RequestLogin][Log] GM logou[UID=" + (pi.uid)
                                                 + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                                     }
@@ -379,7 +384,7 @@ namespace LoginServer.ServerTcp
                                         // Authorized a ficar online no server por tempo indeterminado
                                         _session.m_is_authorized = 1;
 
-                                        SUCCESS_LOGIN("requestLogin", _session);
+                                        SUCCESS_LOGIN("RequestLogin", _session);
                                     }
 
                                 }
@@ -391,7 +396,7 @@ namespace LoginServer.ServerTcp
 
                                     FIRST_LOGIN(_session);
 
-                                    _smp.Message_Pool.push("[login_server::requestLogin][Log] Primeira vez que o player loga. player[UID=" + (pi.uid)
+                                    _smp.Message_Pool.push("[login_server::RequestLogin][Log] Primeira vez que o player loga. player[UID=" + (pi.uid)
                                             + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                                 }
@@ -403,7 +408,7 @@ namespace LoginServer.ServerTcp
 
                                     FIRST_SET(_session);
 
-                                    _smp.Message_Pool.push("[login_server::requestLogin][Log] Primeira vez que o player escolhe um character padrao. player[UID="
+                                    _smp.Message_Pool.push("[login_server::RequestLogin][Log] Primeira vez que o player escolhe um character padrao. player[UID="
                                             + (pi.uid) + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                                 }
@@ -423,7 +428,7 @@ namespace LoginServer.ServerTcp
 
                                     packet_func_ls.session_send(p, _session, 0);
 
-                                    _smp.Message_Pool.push("[login_server::requestLogin][Log] Player ja esta logado no game server. player[UID="
+                                    _smp.Message_Pool.push("[login_server::RequestLogin][Log] Player ja esta logado no game server. player[UID="
                                             + (pi.uid) + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                                 }
@@ -433,9 +438,9 @@ namespace LoginServer.ServerTcp
                                     // Authorized a ficar online no server por tempo indeterminado
                                     _session.m_is_authorized = 1;
 
-                                    SUCCESS_LOGIN("requestLogin", _session);
+                                    SUCCESS_LOGIN("RequestLogin", _session);
 
-                                    _smp.Message_Pool.push("[login_server::requestLogin][Log] GM logou[UID=" + (pi.uid)
+                                    _smp.Message_Pool.push("[login_server::RequestLogin][Log] GM logou[UID=" + (pi.uid)
                                             + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                                 }
@@ -445,7 +450,7 @@ namespace LoginServer.ServerTcp
                                     // Authorized a ficar online no server por tempo indeterminado
                                     _session.m_is_authorized = 1;
 
-                                    SUCCESS_LOGIN("requestLogin", _session);
+                                    SUCCESS_LOGIN("RequestLogin", _session);
                                 }
                             }
 
@@ -457,7 +462,7 @@ namespace LoginServer.ServerTcp
                             packet_func_ls.session_send(p, _session, 1); // Erro pass
 
 
-                            _smp.Message_Pool.push("[login_server::requestLogin][Log] senha errada. ID: " + cmd_verifyId.getID()
+                            _smp.Message_Pool.push("[login_server::RequestLogin][Log] senha errada. ID: " + cmd_verifyId.getID()
                                     + "  senha: " + pass_md5/*cmd_verifyPass.getPass()*/, _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
                         }
 
@@ -469,7 +474,7 @@ namespace LoginServer.ServerTcp
                         //// Authorized a ficar online no server por tempo indeterminado
                         _session.m_is_authorized = 1;
 
-                        _smp.Message_Pool.push("[login_server::requestLogin][Log] Criando um novo usuario[ID=" + cmd_verifyId.getID()
+                        _smp.Message_Pool.push("[login_server::RequestLogin][Log] Criando um novo usuario[ID=" + cmd_verifyId.getID()
                                 + ", PASSWORD=" + pass_md5/*pass*/ + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                         var ip = _session.GetAdress;
@@ -498,7 +503,7 @@ namespace LoginServer.ServerTcp
                         FIRST_LOGIN(_session);
 
                         // Log
-                        _smp.Message_Pool.push("[login_server::requestLogin][Log] Conta Criada com sucesso. Player[UID=" + (pi.uid)
+                        _smp.Message_Pool.push("[login_server::RequestLogin][Log] Conta Criada com sucesso. Player[UID=" + (pi.uid)
                                 + ", ID=" + pi.id + ", PASSWORD=" + pass_md5/*pi.pass*/ + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                     }
@@ -508,7 +513,7 @@ namespace LoginServer.ServerTcp
                         p = packet_func_ls.pacote001(_session, 6/*ID é 2, 6 é o ID ou pw errado*/);
                         packet_func_ls.session_send(p, _session, 1);
                         _session.m_pi.id = result.id;
-                        _smp.Message_Pool.push("[login_server::requestLogin][Log] ID nao existe, ID: " + cmd_verifyId.getID(), _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
+                        _smp.Message_Pool.push("[login_server::RequestLogin][Log] ID nao existe, ID: " + cmd_verifyId.getID(), _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
                         OnSessionClosed(_session);
                     }
 
@@ -522,7 +527,7 @@ namespace LoginServer.ServerTcp
                     p.AddInt32(500012);     // Ban por Região;
 
                     packet_func_ls.session_send(p, _session, 0);
-                    _smp.Message_Pool.push("[login_server::requestLogin][Log] Block por Regiao o IP/MAC: " + (_session.m_ip) + "/" + result.mac_address, _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
+                    _smp.Message_Pool.push("[login_server::RequestLogin][Log] Block por Regiao o IP/MAC: " + (_session.m_ip) + "/" + result.mac_address, _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
                 }
 
             }
@@ -530,7 +535,7 @@ namespace LoginServer.ServerTcp
             catch (exception e)
             {
 
-                _smp.Message_Pool.push("[login_server::requestLogin][ErrorSystem] " + e.getFullMessageError(), _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
+                _smp.Message_Pool.push("[login_server::RequestLogin][ErrorSystem] " + e.getFullMessageError(), _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                 if (e.getCodeError() == STDA_ERROR_TYPE.LOGIN_SERVER)
                 {
@@ -554,13 +559,13 @@ namespace LoginServer.ServerTcp
 
             }
         }
-        public void SUCCESS_LOGIN(string _from, Player  _session)
+        public void SUCCESS_LOGIN(string _from, Player _session)
         {
             (_session).m_pi.m_state = 1;
             _smp.Message_Pool.push("[login_server::" + ((_from)) + "][Log] Player logou. [ID=" + ((_session).m_pi.id) + ", UID=" + ((_session).m_pi.uid) + "]");
             packet_func_ls.succes_login((this), (_session));
         }
-        protected void FIRST_SET(Player  _session)
+        protected void FIRST_SET(Player _session)
         {
             (_session).m_pi.m_state = 3;
             var p = new Packet();
@@ -569,7 +574,7 @@ namespace LoginServer.ServerTcp
             p = packet_func_ls.pacote001((_session), 0xD9);
             packet_func_ls.session_send(p, (_session), 1);
         }
-        protected void FIRST_LOGIN(Player  _session)
+        protected void FIRST_LOGIN(Player _session)
         {
             _session.m_pi.m_state = 2;
             var p = new Packet();
@@ -579,7 +584,7 @@ namespace LoginServer.ServerTcp
             packet_func_ls.session_send(p, (_session), 1);
         }
 
-        public void requestDownPlayerOnGameServer(Player  _session, Packet p)
+        public void requestDownPlayerOnGameServer(Player _session, Packet p)
         {
             try
             {
@@ -629,24 +634,24 @@ namespace LoginServer.ServerTcp
             }
         }
 
-        internal void requestReLogin(Player  _session, Packet _packet)
+        internal void requestReLogin(Player _session, Packet _packet)
         {
             var p = _packet;
 
             try
             {
 
-               string id = _packet.ReadString();
-               _packet.ReadInt32(out int server_uid);
+                string id = _packet.ReadString();
+                _packet.ReadInt32(out int server_uid);
                 string auth_key_login = _packet.ReadString();
 
-# if RELEASE
+#if RELEASE
                _smp.Message_Pool.push("[login_server::requestReLogin][Log] ID: " + id, _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
                _smp.Message_Pool.push("[login_server::requestReLogin][Log] UID: " + (server_uid), _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
                _smp.Message_Pool.push("[login_server::requestReLogin][Log] Auth Key Login: " + auth_key_login, _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 #else
-               _smp.Message_Pool.push("[login_server::requestReLogin][Log] ID: " + id, _smp.type_msg.CL_ONLY_FILE_LOG);
-               _smp.Message_Pool.push("[login_server::requestReLogin][Log] UID: " + (server_uid), _smp.type_msg.CL_ONLY_FILE_LOG);
+                _smp.Message_Pool.push("[login_server::requestReLogin][Log] ID: " + id, _smp.type_msg.CL_ONLY_FILE_LOG);
+                _smp.Message_Pool.push("[login_server::requestReLogin][Log] UID: " + (server_uid), _smp.type_msg.CL_ONLY_FILE_LOG);
                 _smp.Message_Pool.push("[login_server::requestReLogin][Log] Auth Key Login: " + auth_key_login, _smp.type_msg.CL_ONLY_FILE_LOG);
 #endif
 
@@ -660,9 +665,9 @@ namespace LoginServer.ServerTcp
                     throw cmd_verifyId.getException();
 
                 if (cmd_verifyId.getUID() <= 0) // Verifica se o ID existe
-                    throw new exception("[login_server::requestReLogin][Error] Player[ID=" + id + "] not found. Hacker ou Bug",STDA_ERROR_TYPE.LOGIN_SERVER);
+                    throw new exception("[login_server::requestReLogin][Error] Player[ID=" + id + "] not found. Hacker ou Bug", STDA_ERROR_TYPE.LOGIN_SERVER);
 
-              var cmd_pi= new  CmdPlayerInfo(cmd_verifyId.getUID());
+                var cmd_pi = new CmdPlayerInfo(cmd_verifyId.getUID());
 
                 //snmdb::NormalManagerDB::getInstance().Add(0, &cmd_pi, nullptr, nullptr);
 
@@ -677,7 +682,7 @@ namespace LoginServer.ServerTcp
                     throw new exception("[login_server::requestReLogin][Error] id nao eh igual ao da session[PlayerUID: " + (_session.m_pi.uid) + "] { SESSION_ID="
                             + (_session.m_pi.id) + ", REQUEST_ID=" + id + " } no match", STDA_ERROR_TYPE.LOGIN_SERVER);
 
-               var cmd_akli = new CmdAuthKeyLoginInfo(_session.m_pi.uid);
+                var cmd_akli = new CmdAuthKeyLoginInfo(_session.m_pi.uid);
 
                 //snmdb::NormalManagerDB::getInstance().Add(0, &cmd_akli, nullptr, nullptr);
 
@@ -711,7 +716,7 @@ namespace LoginServer.ServerTcp
                 {   // Verifica se tem permição para acessar
 
                     throw new exception("[login_server::requestReLogin][Log] acesso restrito para o player [UID=" + (_session.m_pi.uid)
-                            + ", ID=" + (_session.m_pi.id) + "]",STDA_ERROR_TYPE.LOGIN_SERVER);
+                            + ", ID=" + (_session.m_pi.id) + "]", STDA_ERROR_TYPE.LOGIN_SERVER);
 
                 }
                 else if (_session.m_pi.block_flag.m_id_state.id_state.ull_IDState != 0)
@@ -761,8 +766,8 @@ namespace LoginServer.ServerTcp
                 }
 
                 // Passou da verificação com sucesso
-               _smp.Message_Pool.push("[login_server::requestReLogin][Log] player[UID=" + (_session.m_pi.uid) + ", ID="
-                        + (_session.m_pi.id) + "] relogou com sucesso", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
+                _smp.Message_Pool.push("[login_server::requestReLogin][Log] player[UID=" + (_session.m_pi.uid) + ", ID="
+                         + (_session.m_pi.id) + "] relogou com sucesso", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
                 // Authorized a ficar online no server por tempo indeterminado
                 _session.m_is_authorized = 1;
@@ -770,18 +775,19 @@ namespace LoginServer.ServerTcp
                 packet_func_ls.succes_login(this, _session, 1/*só passa auth Key Login, Server List, Msn Server List*/);
 
             }
-            catch (exception e) {
+            catch (exception e)
+            {
 
                 // Erro do sistema
                 packet_func_ls.pacote00E(ref p, _session, "", 12, 500052);
                 packet_func_ls.session_send(p, _session, 1);
 
 
-               _smp.Message_Pool.push("[login_server::requestReLogin][ErrorSystem] " + e.getFullMessageError());
+                _smp.Message_Pool.push("[login_server::requestReLogin][ErrorSystem] " + e.getFullMessageError());
             }
-            }
+        }
 
-        
+
 
         public override void onHeartBeat()
         {
@@ -809,18 +815,16 @@ namespace LoginServer.ServerTcp
             try
             {
                 var packet = new Packet(0x0B00);
-                packet.AddInt32(05);
-                packet.AddInt32(10101);
+                packet.AddInt32(_session.m_key);
+                packet.AddInt32(m_si.UID);
                 packet.MakeRaw();
-                var mb = packet.GetMakedBuf();
-                _session.Send(mb.Buffer, 0, (int)mb.Length);
+                var mb = packet.GetMakedBuf().Buffin();               
+                _session.Send(mb);
             }
             catch (Exception ex)
             {
-
+                _smp.Message_Pool.push(ex.Message, "AppServer::onAcceptCompleted", 808);
             }
-
         }
-
     }
 }

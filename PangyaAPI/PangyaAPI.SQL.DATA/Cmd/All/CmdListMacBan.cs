@@ -41,11 +41,11 @@ namespace PangyaAPI.SQL.DATA.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             v_list_mac_ban.Clear();
 
-            var r = consulta(_db, "SELECT mac FROM pangya.pangya_mac_table");
+            var r = consulta( "SELECT mac FROM pangya.pangya_mac_table");
 
             checkResponse(r, "nao conseguiu recuperar a lista de MAC Address");
             return r;

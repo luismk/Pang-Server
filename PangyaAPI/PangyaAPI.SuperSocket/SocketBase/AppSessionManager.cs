@@ -54,7 +54,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
             {
 
                 for (int i = 0; i < m_sessions.Count(); ++i)
-                    if (m_sessions[i] != null)
+                    if (m_sessions[i] != null && m_sessions[i].SocketSession != null)
                         m_sessions[i].Close();
 
                 m_sessions.Clear();

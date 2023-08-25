@@ -42,10 +42,10 @@ namespace LoginServer.Cmd
             m_last_verify = true;
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             m_last_verify = false;
-            var r = procedure(_db, "pangya.ProcVerifyIP", new string[] { "@UID", "@IP" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.NVarChar }, new string[] { m_uid.ToString(), m_ip }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcVerifyIP", new string[] { "@UID", "@IP" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.NVarChar }, new string[] { m_uid.ToString(), m_ip }, ParameterDirection.Input);
             checkResponse(r, "nao conseguiu verificar o ip de accesso do player: " + (m_uid));
             return r;
         }

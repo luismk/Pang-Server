@@ -22,9 +22,9 @@ namespace PangyaAPI.SQL.DATA.Cmd
           
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
-            var r = procedure(_db, "pangya.ProcRegServer_New", new string[] { "@IDUSER", "@NOME", "@ipaddres", "@porta", "@tipo", "@maxusuario", "@currusuario", "@PangRat", "@ServerVersao", "@ClienteVersao", "@propriedade", "@AngelicWingsNumber", "@EventoFlag", "@ExpRat", "@ImgNumber", "@ScratchRat", "@MasteryRat", "@TreasureRat", "@RareItemRat", "@CookieItemRat", "@ChuvaRat" },
+            var r = procedure("pangya.ProcRegServer_New", new string[] { "@IDUSER", "@NOME", "@ipaddres", "@porta", "@tipo", "@maxusuario", "@currusuario", "@PangRat", "@ServerVersao", "@ClienteVersao", "@propriedade", "@AngelicWingsNumber", "@EventoFlag", "@ExpRat", "@ImgNumber", "@ScratchRat", "@MasteryRat", "@TreasureRat", "@RareItemRat", "@CookieItemRat", "@ChuvaRat" },
                 new type_SqlDbType[] 
                 { 
                     type_SqlDbType.Int,

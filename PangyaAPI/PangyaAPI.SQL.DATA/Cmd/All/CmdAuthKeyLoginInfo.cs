@@ -37,13 +37,13 @@ namespace PangyaAPI.SQL.DATA.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             if (m_uid == 0 || m_uid == -1)
                 throw new Exception("[CmdAuthKeyLoginInfo::prepareConsulta][Error] m_uid is invalid(zero).");
 
 
-            var r = procedure(_db, "pangya.ProcGetAuthKeyLogin", new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcGetAuthKeyLogin", new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
 
             checkResponse(r, "nao conseguiu pegar o Auth Server Key do Server[UID=" + (m_uid) + "]");
             return r;

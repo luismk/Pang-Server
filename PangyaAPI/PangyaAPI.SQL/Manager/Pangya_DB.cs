@@ -12,7 +12,8 @@ namespace PangyaAPI.SQL
         protected mssql _db = new mssql();
         public Pangya_DB(bool _waitable) 
         
-        { m_waitable = _waitable; m__exception = new exception("");
+        {
+            m_waitable = _waitable; m__exception = new exception("");
             loadIni();
             _db = new mssql(m_ctx_db.ip, m_ctx_db.name, m_ctx_db.user, m_ctx_db.pass, m_ctx_db.port);
             _db.connect();
@@ -38,14 +39,12 @@ namespace PangyaAPI.SQL
         }
         public virtual void exec()
         {
-            loadIni();
-
-            
+            loadIni();           
             
             try
             {
                 response r = null;
-                if ((r = prepareConsulta((database)_db)) != null)
+                if ((r = prepareConsulta()) != null)
                 {
                     for (var num_result = 0u; num_result < r.getNumResultSet(); ++num_result)
                     {
@@ -66,33 +65,6 @@ namespace PangyaAPI.SQL
             }
             catch (exception e) { }
             }
-
-        public virtual void exec(database input_db)
-        {
-            try
-            {
-                response r = prepareConsulta(_db);
-                if (r != null)
-                {
-                    for (var num_result = 0u; num_result < r.getNumResultSet(); ++num_result)
-                    {
-                        if (r.getResultSetAt(num_result) != null && r.getResultSetAt(num_result).getNumLines() > 0
-                                    && r.getResultSetAt(num_result).getState() == (uint)result_set.STATE_TYPE.HAVE_DATA)
-                        {
-                            for (var _result = r.getResultSetAt(num_result).getFirstLine(); _result != null; _result = _result.next)
-                            {
-                                lineResult(_result, num_result);
-                            }
-                        }// só faz esse else se for mandar uma exception
-
-                        clear_result(r.getResultSetAt(num_result));
-                    }
-
-                    clear_response(r);
-                }
-            }
-            catch (exception e) { }
-        }
 
         public virtual exception getException() { return m_exception; }
 
@@ -116,20 +88,7 @@ namespace PangyaAPI.SQL
         public virtual response procedure(string _name, string[] _params, type_SqlDbType[] tipo = null, string[] valor = null, ParameterDirection Direcao = ParameterDirection.Input) { return _db.ExecProc(_name, _params, tipo, valor, Direcao); }
 
 
-        public virtual response _insert(database input_db, string _query)
-        {
-            return _db.ExecQuery(_query);
-        }
-        public virtual response _update(database input_db, string _query) { return _db.ExecQuery(_query); }
-
-        public virtual response _delete(database input_db, string _query) { return _db.ExecQuery(_query); }
-
-        public virtual response consulta(database input_db, string _query) { return _db.ExecQuery(_query); }
-
-        public virtual response procedure(database input_db, string _name, string[] _params, type_SqlDbType[] tipo = null, string[] valor = null, ParameterDirection Direcao = ParameterDirection.Input) { return _db.ExecProc(_name, _params, tipo, valor, Direcao); }
-
-
-
+       
         public virtual void postAndWaitResponseQuery(exec_query _query)
         {
             _query.waitEvent(-1);
@@ -157,7 +116,7 @@ namespace PangyaAPI.SQL
         }
 
         protected abstract void lineResult(ctx_res _result, uint _index_result);
-        protected abstract response prepareConsulta(database input_db);
+        protected abstract response prepareConsulta();
       
         protected virtual string _getName { get => ToString(); set => ToString(value); }
 

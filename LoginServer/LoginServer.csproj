@@ -19,7 +19,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>LoginServer\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -69,6 +69,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\PangyaAPI\PangyaAPI.Cryptor\PangyaAPI.Cryptor.csproj">
+      <Project>{BCCD991F-699A-4915-B533-074BABCD3DEC}</Project>
+      <Name>PangyaAPI.Cryptor</Name>
+    </ProjectReference>
     <ProjectReference Include="..\PangyaAPI\PangyaAPI.SQL.DATA\PangyaAPI.SQL.DATA.csproj">
       <Project>{1815a404-456d-4817-9061-d418d3ec4547}</Project>
       <Name>PangyaAPI.SQL.DATA</Name>

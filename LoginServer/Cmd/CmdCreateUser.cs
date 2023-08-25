@@ -44,7 +44,7 @@ namespace LoginServer.Cmd
             }      
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             m_uid = 0;
 
@@ -52,7 +52,7 @@ namespace LoginServer.Cmd
                 throw new exception("[CmdCreateUser::prepareConsulta][Error] argumentos invalidos.[ID=" + m_id + ",PASSWORD=" + m_pass + ",IP=" + m_ip + "]", STDA_ERROR_TYPE.PANGYA_DB);
 
 
-            var r = procedure(_db, "pangya.ProcNewUser", new string[] { "@UserID", "@pass", "@IPaddr","@serverUID", "@accountUserID" }, new type_SqlDbType[] { type_SqlDbType.NVarChar, type_SqlDbType.NVarChar, type_SqlDbType.NVarChar, type_SqlDbType.Int, type_SqlDbType.Int}, new string[] { m_id.ToString(),m_pass, m_ip, m_server_uid.ToString(), "0" }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcNewUser", new string[] { "@UserID", "@pass", "@IPaddr","@serverUID", "@accountUserID" }, new type_SqlDbType[] { type_SqlDbType.NVarChar, type_SqlDbType.NVarChar, type_SqlDbType.NVarChar, type_SqlDbType.Int, type_SqlDbType.Int}, new string[] { m_id.ToString(),m_pass, m_ip, m_server_uid.ToString(), "0" }, ParameterDirection.Input);
             checkResponse(r, "nao conseguiu criar um usuario[ID=" + m_id + ",PASSWORD=" + m_pass + ",IP=" + m_ip + ",SERVER UID=" + (m_server_uid) + "]"); 
             return r;
         }

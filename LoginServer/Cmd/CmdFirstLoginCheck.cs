@@ -17,14 +17,9 @@ namespace LoginServer.Cmd
         bool m_check;
         protected override string _getName { get; set; } = "CmdFirstLoginCheck";
 
-        public CmdFirstLoginCheck(int _uid, bool _check = false) : this(true)
+        public CmdFirstLoginCheck(int _uid) : base(false)
         {
             m_uid = _uid;
-            m_check = _check;
-        }
-
-        public CmdFirstLoginCheck(bool wait = false) : base(wait)
-        {
         }
 
         protected override void lineResult(ctx_res _result, uint _index_result)
@@ -32,7 +27,7 @@ namespace LoginServer.Cmd
             checkColumnNumber(1);
             try
             {
-                m_check = _result.GetInt32(0) == 1 ? false : true;
+                m_check = _result.GetBoolean(0);
             }
             catch (Exception)
             {
@@ -41,9 +36,9 @@ namespace LoginServer.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
-            var r = consulta(_db, "SELECT FIRST_LOGIN FROM pangya.account WHERE uid = " + m_uid.ToString());
+            var r = consulta("SELECT FIRST_LOGIN from pangya.account WHERE UID = " + m_uid);
             checkResponse(r, "nao conseguiu verificar o first login do player: " + (m_uid));
             return r;
         }

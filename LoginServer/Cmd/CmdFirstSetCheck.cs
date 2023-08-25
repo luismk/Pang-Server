@@ -41,9 +41,9 @@ namespace LoginServer.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
-            var r = consulta(_db, "SELECT FIRST_SET FROM pangya.account WHERE uid = " + m_uid.ToString());
+            var r = consulta( "SELECT FIRST_SET FROM pangya.account WHERE uid = " + m_uid.ToString());
             checkResponse(r, "nao conseguiu verificar o first login do player: " + (m_uid));
             return r;
         }

@@ -20,12 +20,12 @@ namespace PangyaAPI.SQL.DATA.Cmd
           
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             if (string.IsNullOrEmpty(m_nick))
                 throw new Exception("[CmdSaveNick::prepareConsulta][Error] Nick invalid");
 
-            var r = procedure(_db, "pangya.ProcSaveNickname", new string[] { "@UID", "@NICKNAME" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.VarChar }, new string[] { m_uid.ToString(), m_nick }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcSaveNickname", new string[] { "@UID", "@NICKNAME" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.VarChar }, new string[] { m_uid.ToString(), m_nick }, ParameterDirection.Input);
             checkResponse(r, "nao conseguiu atualizar o nick: " + m_nick + ", do player: " + m_uid);
             return r;
         }

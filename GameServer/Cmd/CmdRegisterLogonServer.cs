@@ -1,5 +1,5 @@
 ﻿using PangyaAPI.SQL;
-using PangyaAPI.SQL.TYPE;
+
 using System.Data;
 
 namespace GameServer.Cmd
@@ -21,9 +21,9 @@ namespace GameServer.Cmd
             return;
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
-            var r = procedure(_db, "pangya.ProcRegisterLogonServer", new string[] { "@IDUSER", "@gameserver_id" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.Int }, new string[] { m_uid.ToString(), m_server_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcRegisterLogonServer", new string[] { "@IDUSER", "@gameserver_id" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.Int }, new string[] { m_uid.ToString(), m_server_uid.ToString() }, ParameterDirection.Input);
 
             checkResponse(r, "nao conseguiu registrar o logon do player: " + (m_uid) + ", na option: " + (m_server_uid));
             return r;

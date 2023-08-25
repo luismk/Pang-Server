@@ -46,13 +46,13 @@ namespace PangyaAPI.SQL.DATA.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
 
             if (m_uid == 0 || m_uid == -1)
                 throw new Exception("[CmdAuthKeyGameInfo::prepareConsulta][Error] m_uid is invalid(zero).");
 
-            var r = procedure(_db, "pangya.ProcGetAuthKeyGame", new string[] { "@UID", "@SERVERUID" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString(), m_server_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcGetAuthKeyGame", new string[] { "@UID", "@SERVERUID" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString(), m_server_uid.ToString() }, ParameterDirection.Input);
 
             checkResponse(r, "nao conseguiu pegar o auth key game do player: " + (m_uid) + ", do server uid: " + (m_server_uid));
             return r;

@@ -35,10 +35,10 @@ namespace PangyaAPI.SQL.DATA.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
 
-            var r = procedure(_db, "pangya.ProcAddCharacter", 
+            var r = procedure("pangya.ProcAddCharacter", 
                 new string[]
                 {
                     "@IDUSER",

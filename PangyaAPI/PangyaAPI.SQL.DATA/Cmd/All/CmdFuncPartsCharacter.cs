@@ -27,10 +27,10 @@ namespace PangyaAPI.SQL.DATA.Cmd
            //e um update
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
 
-            var r = procedure(_db, "pangya.FuncConcertaPartsCharacter",
+            var r = procedure("pangya.FuncConcertaPartsCharacter",
                 new string[]
                 {
                     "@IDUSER",

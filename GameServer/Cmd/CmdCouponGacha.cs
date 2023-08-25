@@ -1,7 +1,7 @@
 ﻿using GameServer.TYPE;
 using PangyaAPI.SQL.DATA.TYPE;
 using PangyaAPI.SQL;
-using PangyaAPI.SQL.TYPE;
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -40,11 +40,11 @@ namespace GameServer.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             var m_szConsulta  = new string[] { "SELECT c0 FROM pangya.pangya_item_warehouse WHERE typeid = 436207744 AND uid = ", "SELECT c0 FROM pangya.pangya_item_warehouse WHERE typeid = 436207747 AND uid = " };
 
-            var r = consulta(_db,m_szConsulta[0] + (m_uid) + "; " + m_szConsulta[1] + (m_uid));
+            var r = consulta(m_szConsulta[0] + (m_uid) + "; " + m_szConsulta[1] + (m_uid));
             checkResponse(r, "nao conseguiu pegar o(s) coupon(s) gacha do player: " + (m_uid));
             return r;
         }

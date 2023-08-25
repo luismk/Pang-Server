@@ -35,9 +35,9 @@ namespace GameServer.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
-            var r = consulta(_db, "SELECT senha, public_lock, state FROM pangya.pangya_myroom WHERE uid = " + m_uid);
+            var r = consulta( "SELECT senha, public_lock, state FROM pangya.pangya_myroom WHERE uid = " + m_uid);
             checkResponse(r, "nao conseguiu pegar o member info do player: " + (m_uid));
             return r;
         }

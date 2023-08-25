@@ -44,12 +44,12 @@ namespace PangyaAPI.SQL.DATA.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             
             m_lastVerify = false;
 
-            var r = procedure(_db, "pangya.ProcVerifyPass", new string[] { "@IDUSER", "@PASS" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.VarChar }, new string[] { m_uid.ToString(), m_pass }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcVerifyPass", new string[] { "@IDUSER", "@PASS" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.VarChar }, new string[] { m_uid.ToString(), m_pass }, ParameterDirection.Input);
 
             checkResponse(r, "nao conseguiu pegar a uid do player pela senha: " + m_pass);
 

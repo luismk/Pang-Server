@@ -65,9 +65,9 @@ namespace GameServer.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
-            var r = procedure(_db, "pangya.ProcGetGuildInfo", new string[] { "@IDUSER", "@opt" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.Int }, new string[] { m_uid.ToString(), m_option.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcGetGuildInfo", new string[] { "@IDUSER", "@opt" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.Int }, new string[] { m_uid.ToString(), m_option.ToString() }, ParameterDirection.Input);
             checkResponse(r, "nao conseguiu pegar o guild info do player: " + (m_uid));
             return r;
         }

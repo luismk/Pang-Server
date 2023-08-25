@@ -41,14 +41,14 @@ namespace PangyaAPI.SQL.DATA.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             if (string.IsNullOrEmpty(m_id))
                 throw new Exception("[CmdVerify::prepareConsulta][Error] ID invalid");
 
             m_uid = 0;
 
-            var r = procedure(_db, "pangya.ProcVerifyID", new string[] { "@ID" }, new type_SqlDbType[] { type_SqlDbType.VarChar }, new string[] { m_id }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcVerifyID", new string[] { "@ID" }, new type_SqlDbType[] { type_SqlDbType.VarChar }, new string[] { m_id }, ParameterDirection.Input);
 
             checkResponse(r, "nao conseguiu verificar se existe o ID: " + m_id);
             return r;

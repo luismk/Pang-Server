@@ -73,7 +73,7 @@ namespace GameServer.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
 
             uint season = (m_season == TYPE_SEASON.ALL) ? 9 + ((uint)m_modo) : (m_modo == TYPE_MODO.M_NORMAL ? ((uint)m_season) : Convert.ToUInt32(m_season) * 10 + ((uint)m_modo));
@@ -82,7 +82,7 @@ namespace GameServer.Cmd
             var param = new string[] { "@IDUSER", "@tipo_in" };
             var type_sql = new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.Int };
             var values = new string[] { m_uid.ToString(), ((byte)m_season).ToString() };
-            var r = procedure(_db, m_type == TYPE.NORMAL ? m_szConsulta[0] : m_szConsulta[1], param,
+            var r = procedure(m_type == TYPE.NORMAL ? m_szConsulta[0] : m_szConsulta[1], param,
                 type_sql, values, ParameterDirection.Input);
             checkResponse(r, "nao conseguiu pegar o member info do player: " + (m_uid));
             return r;

@@ -10,6 +10,7 @@ using LoginServer.ServerTcp;
 using LoginServer.Defines;
 using PangyaAPI.SuperSocket.SocketBase;
 using LoginServer.Session;
+using PangyaAPI.Cryptor.HandlePacket;
 
 namespace LoginServer.PacketFunc
 {
@@ -22,7 +23,7 @@ namespace LoginServer.PacketFunc
         {
             try
             {
-                Program.AppServer.requestLogin(_arg1._packet, _arg1._session as Player);
+                Program.AppServer.RequestLogin(_arg1._packet, _arg1._session as Player);
             }
             catch (Exception)
             {
@@ -431,8 +432,7 @@ namespace LoginServer.PacketFunc
                 throw new exception("[packet_func::session_send][Error] session *s is nullptr.", STDA_ERROR_TYPE.PACKET_FUNC_LS);
 
             var mb = p.GetPlainBuf();
-
-            s.Send(mb.Buffer,0, (int)mb.Length);
+            s.Send(mb.Encrypt_Buff(s.m_key));
 
             #if _RELEASE
             if(_debug == 1)
@@ -628,6 +628,5 @@ namespace LoginServer.PacketFunc
         }
 
         #endregion
-
     }
 }

@@ -62,37 +62,37 @@ namespace PangyaAPI.SuperSocket.Engine
             }
             else
             {
-               _smp.Message_Pool.push((int)e.SocketError, "ProcessCompleted", 76);
-            }
+#if _RELEASE
+                _smp.Message_Pool.push(e.SocketError.ToString(), "AsyncSocketSession::ProcessCompleted", 76);
+#endif
+}
             return false;
         }
 
         private void OnSendingCompleted(object sender, SocketAsyncEventArgs e)
         {
-            object userToken;
-            userToken = e.UserToken;
-            SendingQueue val;
-            val = (SendingQueue)((userToken is SendingQueue) ? userToken : null);
-            if (!this.ProcessCompleted(e))
+            var queue = e.UserToken as SendingQueue;
+
+            if (!ProcessCompleted(e))
             {
-                this.ClearPrevSendState(e);
-                base.OnSendError(val, (CloseReason)5);
+                ClearPrevSendState(e);
+                OnSendError(queue, CloseReason.SocketError);
                 return;
             }
-            int num;
-            num = val.Sum((ArraySegment<byte> q) => q.Count);
-            if (num != e.BytesTransferred)
+
+            var count = queue.Sum(q => q.Count);
+
+            if (count != e.BytesTransferred)
             {
-                val.InternalTrim(e.BytesTransferred);
-               _smp.Message_Pool.push(string.Format("{0} of {1} were transferred, send the rest {2} bytes right now.", (object)e.BytesTransferred, (object)num, (object)((IEnumerable<ArraySegment<byte>>)val).Sum((ArraySegment<byte> q) => q.Count)));
-                this.ClearPrevSendState(e);
-                this.SendAsync(val);
+                queue.InternalTrim(e.BytesTransferred);
+                //AppSession.Logger.InfoFormat("{0} of {1} were transferred, send the rest {2} bytes right now.", e.BytesTransferred, count, queue.Sum(q => q.Count));
+                ClearPrevSendState(e);
+                SendAsync(queue);
+                return;
             }
-            else
-            {
-                this.ClearPrevSendState(e);
-                base.OnSendingCompleted(val);
-            }
+
+            ClearPrevSendState(e);
+            base.OnSendingCompleted(queue);
         }
 
         private void ClearPrevSendState(SocketAsyncEventArgs e)

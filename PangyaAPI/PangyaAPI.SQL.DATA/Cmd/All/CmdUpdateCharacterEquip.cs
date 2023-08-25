@@ -32,10 +32,10 @@ namespace PangyaAPI.SQL.DATA.Cmd
             return;
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
 
-            var r = procedure(_db, "pangya.USP_FLUSH_CHARACTER",
+            var r = procedure("pangya.USP_FLUSH_CHARACTER",
                 new string[]
                 {
                     "@IDUSER",

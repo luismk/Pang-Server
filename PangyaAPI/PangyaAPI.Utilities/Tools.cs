@@ -452,7 +452,7 @@ namespace PangyaAPI.Utilities
                 strBuilder.Append(result[i].ToString("x2"));
             }
 
-            return strBuilder.ToString();
+            return strBuilder.ToString().ToUpper();
         }
 
         public static int[] ProcuraNoArquivo(this byte[] bytes, string procurar)

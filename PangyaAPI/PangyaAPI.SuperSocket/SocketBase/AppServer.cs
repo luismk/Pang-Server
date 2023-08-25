@@ -60,6 +60,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
         public AppServer(IReceiveFilterFactory<StringRequestInfo> receiveFilterFactory)
             : base(receiveFilterFactory)
         {
+            funcs = new func_arr();
         }
     }
 
@@ -344,10 +345,6 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
         public void addPacketCall(short id, Action<ParamDispatch> func)
         {
-            if (funcs == null)
-            {
-                funcs = new func_arr();
-            }
             funcs.addPacketCall(id, func);
         }
         protected void dispach_packet_same_thread(TAppSession _session, Packet _packet)
@@ -356,7 +353,6 @@ namespace PangyaAPI.SuperSocket.SocketBase
             try
             {
                 func = funcs.getPacketCall((short)_packet.GetTipo());
-
             }
             catch (Exception e)
             {

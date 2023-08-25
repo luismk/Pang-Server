@@ -32,14 +32,14 @@ namespace GameServer.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
             var m_szConsulta = new string[] { };
             var param = new string[] { "@IDUSER"};
             var type_sql = new type_SqlDbType[] { type_SqlDbType.Int };
             var values = new string[] { m_uid.ToString() };
 
-            var r = procedure(_db, "pangya.GetTutorial", param,
+            var r = procedure("pangya.GetTutorial", param,
                 type_sql, values, ParameterDirection.Input);
             checkResponse(r, "nao conseguiu pegar o member info do player: " + (m_uid));
             return r;

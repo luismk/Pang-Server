@@ -206,7 +206,7 @@ namespace GameServer.PACKET
             }
 
         }
-        internal static void pacote11F(ref packet p, Player gPlayer, PlayerInfo pi, short tipo)
+        internal static void pacote11F(ref packet p, Player Player, PlayerInfo pi, short tipo)
         {
             if (pi == null)
                 throw new Exception("Erro PlayerInfo *pi is nullptr. packet_func::pacote11F()");
@@ -218,7 +218,7 @@ namespace GameServer.PACKET
             p.AddBuffer(pi.TutoInfo, Marshal.SizeOf<TutorialInfo>());
         }
 
-        internal static void pacote1A9(ref packet p, Player gPlayer, int ttl_milliseconds/*time to live*/, int option = 0)
+        internal static void pacote1A9(ref packet p, Player Player, int ttl_milliseconds/*time to live*/, int option = 0)
         {
             p.init_plain(0x1A9);
 
@@ -472,7 +472,8 @@ namespace GameServer.PACKET
             if (s == null)
                 throw new Exception("[packet_func::session_send][Error] session *s is nullptr.");
 
-            s.Send(p.GetBuffer());
+            var mb = p.GetPlainBuf();
+            s.Send(mb.Encrypt_Buff(s.m_key));
 #if _RELEASE
             if(_debug == 1)
             {

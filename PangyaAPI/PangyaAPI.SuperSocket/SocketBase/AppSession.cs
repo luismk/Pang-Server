@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Web.SessionState;
 using PangyaAPI.SuperSocket.Interface;
+using PangyaAPI.Utilities;
 using PangyaAPI.Utilities.BinaryModels;
 using _smp = PangyaAPI.Utilities.Log;
 namespace PangyaAPI.SuperSocket.SocketBase
@@ -162,17 +163,15 @@ namespace PangyaAPI.SuperSocket.SocketBase
             {
                 throw new ArgumentNullException(nameof(appServer));
             }
-
-            using (var Server = appServer as AppServerBase<TAppSession, TRequestInfo>)
-            {
+            var Server = appServer as AppServerBase<TAppSession, TRequestInfo>;
+            
                 AppServer = Server;
                 Charset = Server.TextEncoding;
                 SocketSession = appSession;
                 m_oid = appSession.m_oid = Server.NextConnectionID;
                 m_ReceiveFilter = Server.ReceiveFilterFactory.CreateFilter(appServer, this, appSession.RemoteEndPoint);
                 IReceiveFilterInitializer filterInitializer = m_ReceiveFilter as IReceiveFilterInitializer;
-                filterInitializer?.Initialize(Server, this);
-            }
+                filterInitializer?.Initialize(Server, this);            
             appSession.Initialize(this);
             OnInit();
         }
@@ -229,8 +228,6 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
             //// Inicia a thread de verificação
             //checkConnectionThread.Start();
-
-
         }
 
         /// <summary>
@@ -354,7 +351,10 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// <param name="length">The length.</param>
         public virtual void Send(byte[] data, int offset, int length)
         {
-            InternalSend(new ArraySegment<byte>(data, offset, length));
+            var new_data = new byte[length];
+            Buffer.BlockCopy(data, 0, new_data, 0, length);
+            new_data.DebugDump();
+            InternalSend(new ArraySegment<byte>(new_data, 0, new_data.Length));
         }
 
         public virtual void Send(byte[] data)

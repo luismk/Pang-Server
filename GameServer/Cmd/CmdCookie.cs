@@ -21,7 +21,7 @@ namespace GameServer.Cmd
             try
             {
                 var uid_req = _result.GetUInt32(0);
-                m_cookie = _result.GetUInt64(2);
+                m_cookie = _result.GetUInt64(1);
                 if (uid_req != m_uid)
                     throw new Exception("[CmdCookie::lineResult][Error] retornou outro uid do que foi requisitado. uid_req: " + (uid_req) + " != " +(m_uid));
             }
@@ -32,9 +32,9 @@ namespace GameServer.Cmd
             }
         }
 
-        protected override Response prepareConsulta(database _db)
+        protected override Response prepareConsulta()
         {
-            var r = consulta(_db, "SELECT uid, cookie FROM pangya.user_info WHERE uid = " + m_uid);
+            var r = consulta( "SELECT uid, cookie FROM pangya.user_info WHERE uid = " + m_uid);
             checkResponse(r, "nao conseguiu pegar o cookie info do player: " + (m_uid));
             return r;
         }

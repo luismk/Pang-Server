@@ -225,6 +225,7 @@ namespace PangyaAPI.SuperSocket.Engine
         /// </summary>
         protected virtual void StartSession()
         {
+            AppSession.LastActiveTime = DateTime.Now;
             AppSession.StartSession();
         }
 
