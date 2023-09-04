@@ -12,14 +12,14 @@ namespace PangyaAPI.SQL.DATA.Cmd
         AuthKeyGameInfo m_akgi;
         protected override string _getName { get; set; } = "CmdAuthKeyGameInfo";
 
-        public CmdAuthKeyGameInfo(int _uid, int _server_uid) : this(true)
+        public CmdAuthKeyGameInfo(int _uid, int _server_uid)
         {
             m_akgi = new AuthKeyGameInfo();
             m_uid = _uid;
             m_server_uid= _server_uid;
         }
 
-        public CmdAuthKeyGameInfo(bool wait = false) : base(wait)
+        public CmdAuthKeyGameInfo()
         {
         }
 

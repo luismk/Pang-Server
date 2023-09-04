@@ -31,7 +31,6 @@ namespace GameServer.Cmd
 			m_type = _type;
 			m_item_id = _item_id;
 			v_ce = new SortedList<uint, CharacterInfoEx>();
-
 		}
 		/// <summary>
 		/// inicia a consulta

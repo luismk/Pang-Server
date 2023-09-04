@@ -60,5 +60,43 @@ namespace PangyaAPI.SuperSocket.Ext
                 sent += thisSent;
             }
         }
+
+        public static void shutdown(Socket client, SocketShutdown code)
+        {
+            client.Shutdown(code);
+
+            if (client == null)
+                return;
+
+            if (!client.Connected)
+                return;
+
+            try
+            {
+                client.Shutdown(code);
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (Exception e)
+            {
+                //if (logger != null)
+                //    logger.LogError(e);
+            }
+
+            try
+            {
+                client.Close();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (Exception e)
+            {
+                //if (logger != null)
+                //    logger.LogError(e);
+            }
+
+        }
     }
 }

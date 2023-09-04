@@ -302,12 +302,11 @@ namespace PangyaAPI.IFF.Lister
         }
         protected virtual T CreateItem()
         {
-            
             return (T)Activator.CreateInstance(typeof(T));
         }
         ~IFFEntryList()
         {
-            Debug.WriteLine("Destruiu a class IFFList!");
+            //Debug.WriteLine("Destruiu a class IFFList!");
         }
     }
 }

@@ -12,13 +12,13 @@ namespace PangyaAPI.SQL.DATA.Cmd
         KeysOfLogin m_keys_of_login;
         protected override string _getName { get; set; } = "CmdKeysOfLogin";
 
-        public CmdKeysOfLogin(int _uid) : this(true)
+        public CmdKeysOfLogin(int _uid)
         {
             m_keys_of_login = new KeysOfLogin();
             m_uid = _uid;
         }
 
-        public CmdKeysOfLogin(bool wait = false) : base(wait)
+        public CmdKeysOfLogin()
         {
         }
 

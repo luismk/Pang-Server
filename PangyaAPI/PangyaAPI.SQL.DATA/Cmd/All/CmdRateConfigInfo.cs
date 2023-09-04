@@ -17,12 +17,12 @@ namespace PangyaAPI.SQL.DATA.Cmd
         protected override string _getName { get; set; } = "CmdRateConfigInfo";
        
 
-        public CmdRateConfigInfo(int _uid) : this(true)
+        public CmdRateConfigInfo(int _uid)
         {
             m_server_uid = _uid;
             m_rate_info = new RateConfigInfo();
         }
-        public CmdRateConfigInfo(bool wait = false) : base(wait)
+        public CmdRateConfigInfo()
         {
             m_rate_info = new RateConfigInfo();
         }

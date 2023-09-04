@@ -22,137 +22,127 @@ namespace GameServer.TYPE
 
         public override void addCookie(ulong _cookie)
         {
-            throw new NotImplementedException();
         }
 
         public override void addCookie(int _uid, ulong _cookie)
         {
-            throw new NotImplementedException();
         }
 
         public override int addExp(int _exp)
         {
-            throw new NotImplementedException();
+            return 1;
         }
 
         public override void addGrandZodiacPontos(ulong _pontos)
         {
-            throw new NotImplementedException();
         }
 
         public override void addMoeda(ulong _pang, ulong _cookie)
         {
-            throw new NotImplementedException();
         }
 
         public override void addPang(ulong _pang)
         {
-            throw new NotImplementedException();
         }
 
         public override void addPang(int _uid, ulong _pang)
         {
-            throw new NotImplementedException();
         }
 
         public override void addUserInfo(UserInfoEx _ui, ulong _total_pang_win_game = 0)
         {
-            throw new NotImplementedException();
         }
 
         public override bool checkAlterationCookieOnDB()
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override bool checkAlterationPangOnDB()
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override bool checkEquipedItem(int _typeid)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override PlayerRoomInfo.uItemBoost checkEquipedItemBoost()
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override void consomeCookie(ulong _cookie)
         {
-            throw new NotImplementedException();
         }
 
         public override void consomeMoeda(ulong _pang, ulong _cookie)
         {
-            throw new NotImplementedException();
         }
 
         public override void consomePang(ulong _pang)
         {
-            throw new NotImplementedException();
         }
 
         public override CaddieInfoEx findCaddieById(int _id)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override CaddieInfoEx findCaddieByTypeid(int _typeid)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override CaddieInfoEx findCaddieByTypeidAndId(int _typeid, int _id)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override CardInfo findCardById(int _id)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override CardInfo findCardByTypeid(int _typeid)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override CardEquipInfoEx findCardEquipedById(int _id, int _char_typeid, int _slot)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override CardEquipInfoEx findCardEquipedByTypeid(int _typeid, int _char_typeid = 0, int _slot = 0, int _tipo = 0, int _efeito = 0)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override CharacterInfo findCharacterById(int _id)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override CharacterInfo findCharacterByTypeid(int _typeid)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override CharacterInfo findCharacterByTypeidAndId(int _typeid, int _id)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override FriendInfo findFriendInfoById(string _id)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override FriendInfo findFriendInfoByNickname(string _nickname)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override FriendInfo findFriendInfoByUID(int _uid)
@@ -170,62 +160,62 @@ namespace GameServer.TYPE
 
         public override GrandPrixClear findGrandPrixClear(int _typeid)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override MascotInfoEx findMascotById(int _id)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override MascotInfoEx findMascotByTypeid(int _typeid)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override MascotInfoEx findMascotByTypeidAndId(int _typeid, int _id)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override MyRoomItem findMyRoomItemById(int _id)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public override MyRoomItem findMyRoomItemByTypeid(int _typeid)
         {
-            throw new NotImplementedException();
+            return new MyRoomItem();
         }
 
         public override TrofelEspecialInfo findTrofelEspecialById(int _id)
         {
-            throw new NotImplementedException();
+            return new TrofelEspecialInfo();
         }
 
         public override TrofelEspecialInfo findTrofelEspecialByTypeid(int _typeid)
         {
-            throw new NotImplementedException();
+            return new TrofelEspecialInfo();
         }
 
         public override TrofelEspecialInfo findTrofelEspecialByTypeidAndId(int _typeid, int _id)
         {
-            throw new NotImplementedException();
+            return new TrofelEspecialInfo();
         }
 
         public override TrofelEspecialInfo findTrofelGrandPrixById(int _id)
         {
-            throw new NotImplementedException();
+            return new TrofelEspecialInfo();
         }
 
         public override TrofelEspecialInfo findTrofelGrandPrixByTypeid(int _typeid)
         {
-            throw new NotImplementedException();
+            return new TrofelEspecialInfo();
         }
 
         public override TrofelEspecialInfo findTrofelGrandPrixByTypeidAndId(int _typeid, int _id)
         {
-            throw new NotImplementedException();
+            return new TrofelEspecialInfo();
         }
 
         public override WarehouseItemEx findWarehouseItemById(int _id)
@@ -235,22 +225,22 @@ namespace GameServer.TYPE
 
         public override WarehouseItemEx findWarehouseItemByTypeid(int _typeid)
         {
-            throw new NotImplementedException();
+            return new WarehouseItemEx();
         }
 
         public override WarehouseItemEx findWarehouseItemByTypeidAndId(int _typeid, int _id)
         {
-            throw new NotImplementedException();
+            return new WarehouseItemEx();
         }
 
         public override int getCharacterMaxSlot(CharacterInfo.Stats _stats)
         {
-            throw new NotImplementedException();
+            return 1;
         }
 
         public override int getClubSetMaxSlot(CharacterInfo.Stats _stats)
         {
-            throw new NotImplementedException();
+            return 1;
         }
 
         public override int getSizeCupGrandZodiac()
@@ -279,67 +269,66 @@ namespace GameServer.TYPE
 
         public override int getSlotPower()
         {
-            throw new NotImplementedException();
+            return 1;
         }
 
         public override int getSumRecordGrandPrix()
         {
-            throw new NotImplementedException();
+            return 1;
         }
 
         public override bool isAuxPartEquiped(int _typeid)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override bool isFriend(int _uid)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override bool isMasterCourse()
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override bool isPartEquiped(int _typeid, int _id)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override bool ownerCaddieItem(int _typeid)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override bool ownerHairStyle(int _typeid)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override bool ownerItem(int _typeid, int option = 0)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override bool ownerMailBoxItem(int _typeid)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override bool ownerSetItem(int _typeid)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override void updateCookie()
         {
-            throw new NotImplementedException();
         }
 
         public override bool updateGrandPrixClear(int _typeid, int _position)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override void updateLocationDB()
@@ -348,32 +337,26 @@ namespace GameServer.TYPE
 
         public override void updateMedal(uMedalWin _medal_win)
         {
-            throw new NotImplementedException();
         }
 
         public override void updateMedal(int _uid, uMedalWin _medal_win)
         {
-            throw new NotImplementedException();
         }
 
         public override void updateMoeda()
         {
-            throw new NotImplementedException();
         }
 
         public override void updatePang()
         {
-            throw new NotImplementedException();
         }
 
         public override void updateTrofelInfo(int _trofel_typeid, bool _trofel_rank)
         {
-            throw new NotImplementedException();
         }
 
         public override void updateTrofelInfo(int _uid, int _trofel_typeid, bool _trofel_rank)
         {
-            throw new NotImplementedException();
         }
 
         public override void updateUserInfo()
@@ -383,7 +366,6 @@ namespace GameServer.TYPE
 
         public override void updateUserInfo(int _uid, UserInfoEx _ui)
         {
-            throw new NotImplementedException();
         }
 
         public multimap<uint/*ID*/, WarehouseItemEx> findWarehouseItemItByTypeid(uint _typeid)

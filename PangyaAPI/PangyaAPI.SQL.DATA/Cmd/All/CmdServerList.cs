@@ -21,18 +21,13 @@ namespace PangyaAPI.SQL.DATA.Cmd
         TYPE_SERVER m_type;
         List<ServerInfo> v_server_list;
         protected override string _getName { get; set; } = "CmdServerList";
-        public CmdServerList(TYPE_SERVER _type) : this(true)
+        public CmdServerList(TYPE_SERVER _type)
         {
             v_server_list = new List<ServerInfo>();
             m_type = _type;
         }
 
-        public CmdServerList(byte _type) : this(true)
-        {
-            v_server_list = new List<ServerInfo>();
-            m_type = (TYPE_SERVER)_type;
-        }
-        public CmdServerList(bool wait = false) : base(wait)
+        public CmdServerList()
         {
             v_server_list = new List<ServerInfo>();
         }
@@ -48,7 +43,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
                     si.Name = (_result.data[0].ToString());
                 si.UID = int.Parse(_result.data[1].ToString());
                 if (!string.IsNullOrEmpty(_result.data[2].ToString()))
-                    si.IP = (_result.data[2].ToString());
+                    si.IP = _result.data[2].ToString();
                 si.Port = int.Parse(_result.data[3].ToString());
                 si.MaxUser = int.Parse(_result.data[4].ToString());
                 si.Curr_User = int.Parse(_result.data[5].ToString());
@@ -72,8 +67,6 @@ namespace PangyaAPI.SQL.DATA.Cmd
         protected override Response prepareConsulta()
         {
             v_server_list.Clear();
-
-            //var r = consulta( "SELECT pangya_server_list.[Name], pangya_server_list.[UID], pangya_server_list.[IP], pangya_server_list.[Port], pangya_server_list.MaxUser, pangya_server_list.CurrUser, pangya_server_list.property, pangya_server_list.AngelicWingsNum, pangya_server_list.EventFlag, pangya_server_list.EventMap, pangya_server_list.ImgNo, pangya_server_list.AppRate, pangya_server_list.ScratchRate FROM {0}.pangya_server_list WHERE pangya_server_list.[Type] = " + Convert.ToByte(m_type).ToString());
 
             var r = procedure("pangya.ProcGetServerList", new string[] { "@OPT" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { Convert.ToByte(m_type).ToString() }, ParameterDirection.Input);
 

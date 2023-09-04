@@ -7,13 +7,13 @@ namespace PangyaAPI.SQL.DATA.Cmd
         byte m_valid = 0;
         protected override string _getName { get; set; } = "CmdUpdateAuthKeyLogin";
 
-        public CmdUpdateAuthKeyLogin(int _uid, byte _valid) : this(true)
+        public CmdUpdateAuthKeyLogin(int _uid, byte _valid)
         {
             m_valid = _valid;
             m_uid = _uid;
         }
 
-        public CmdUpdateAuthKeyLogin(bool wait = false) : base(wait)
+        public CmdUpdateAuthKeyLogin()
         {
         }
 

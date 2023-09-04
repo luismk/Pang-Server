@@ -17,12 +17,12 @@ namespace PangyaAPI.SQL.DATA.Cmd
 
         protected override string _getName { get; set; } = "CmdUpdateAuthServerKey";
 
-        public CmdUpdateAuthServerKey(AuthServerKey _ask) : this(true)
+        public CmdUpdateAuthServerKey(AuthServerKey _ask)
         {
             m_ask = _ask;
         }
 
-        public CmdUpdateAuthServerKey(bool wait = false) : base(wait)
+        public CmdUpdateAuthServerKey()
         {
         }
 

@@ -17,7 +17,7 @@ namespace LoginServer.Cmd
         bool m_check;
         protected override string _getName { get; set; } = "CmdFirstLoginCheck";
 
-        public CmdFirstLoginCheck(int _uid) : base(false)
+        public CmdFirstLoginCheck(int _uid)
         {
             m_uid = _uid;
         }

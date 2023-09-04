@@ -8,6 +8,8 @@ using System.Security.Authentication;
 using System.Text;
 using System.Threading;
 using System.Web.SessionState;
+using PangyaAPI.Cryptor.HandlePacket;
+using PangyaAPI.SuperSocket.Cryptor;
 using PangyaAPI.SuperSocket.Interface;
 using PangyaAPI.Utilities;
 using PangyaAPI.Utilities.BinaryModels;
@@ -241,7 +243,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
             Dispose();
         }
 
-        private bool GetState()
+        public bool GetState()
         {
             return m_state;
         }
@@ -310,28 +312,6 @@ namespace PangyaAPI.SuperSocket.SocketBase
         #region Sending processing
 
         /// <summary>
-        /// Try to send the message to client.
-        /// </summary>
-        /// <param name="message">The message which will be sent.</param>
-        /// <returns>Indicate whether the message was pushed into the sending queue</returns>
-        public virtual bool TrySend(string message)
-        {
-            var data = this.Charset.GetBytes(message);
-            return InternalTrySend(new ArraySegment<byte>(data, 0, data.Length));
-        }
-
-        /// <summary>
-        /// Sends the message to client.
-        /// </summary>
-        /// <param name="message">The message which will be sent.</param>
-        public virtual void Send(string message)
-        {
-            var data = this.Charset.GetBytes(message);
-            Send(data, 0, data.Length);
-        }
-
-
-        /// <summary>
         /// Try to send the data to client.
         /// </summary>
         /// <param name="data">The data which will be sent.</param>
@@ -349,16 +329,23 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// <param name="data">The data which will be sent.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="length">The length.</param>
-        public virtual void Send(byte[] data, int offset, int length)
+        public virtual void Send(byte[] data, int offset, int length, bool compress = false)
         {
             var new_data = new byte[length];
             Buffer.BlockCopy(data, 0, new_data, 0, length);
-            new_data.DebugDump();
+            if (compress)
+            {
+                new_data = data.ServerEncrypt(m_key);
+            }
             InternalSend(new ArraySegment<byte>(new_data, 0, new_data.Length));
         }
 
-        public virtual void Send(byte[] data)
+        public virtual void Send(byte[] data, bool compress = false)
         {
+            if (compress)
+            {
+                data = data.ServerEncrypt(m_key);
+            }
             InternalSend(new ArraySegment<byte>(data, 0, data.Length));
         }
 
@@ -366,9 +353,16 @@ namespace PangyaAPI.SuperSocket.SocketBase
         {
             InternalSend(new ArraySegment<byte>(data, 0, data.Length));
         }
-        public virtual void Send(Packet packet)
+
+        public virtual void Send(ref Packet packet, bool compress = false)
         {
-            InternalSend(new ArraySegment<byte>(packet.GetMakedBuf().Buffer, 0, (int)packet.GetMakedBuf().Length));
+            var new_data = packet.GetPlainBuf().Buffin;
+            if (compress)
+            {
+                new_data = new_data.ServerEncrypt(m_key);
+            }
+            InternalSend(new ArraySegment<byte>(new_data, 0, new_data.Length));
+            
         }
         public virtual void Send(PangyaBinaryWriter packet)
         {
@@ -612,7 +606,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// </returns>
         int IAppSession.ProcessRequest(byte[] readBuffer, int offset, int length, bool toBeCopied)
         {
-            while (true)
+            while (Connected)
             {
                 var requestInfo = FilterRequest(readBuffer, offset, length, toBeCopied, out int rest, out int offsetDelta);
 
@@ -620,7 +614,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 {
                     try
                     {
-                        AppServer.ExecuteCommand(this, requestInfo);
+                        AppServer.ExecuteRequest(this as TAppSession, requestInfo);
                     }
                     catch (Exception e)
                     {
@@ -637,6 +631,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 offset = offset + length - rest;
                 length = rest;
             }
+            throw new exception("[APPSESSION][Error]: Error, não esta mais conectado ou esta enviando dados invalidos!", STDA_ERROR_TYPE.SESSION);
         }
 
 
@@ -683,7 +678,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// Initializes a new instance of the <see cref="AppSession&lt;TAppSession&gt;"/> class.
         /// </summary>
         public AppSession()
-            : this(true)
+           
         {
 
         }
@@ -703,7 +698,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// <param name="requestInfo">The request info.</param>
         protected override void HandleUnknownRequest(StringRequestInfo requestInfo)
         {
-            Send("Unknown request: " + requestInfo.PacketID);
+            Send(new byte[0]);
         }
 
         /// <summary>
@@ -723,16 +718,6 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 return rawMessage + m_NewLine;
             else
                 return rawMessage;
-        }
-
-        /// <summary>
-        /// Sends the specified message.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        /// <returns></returns>
-        public override void Send(string message)
-        {
-            base.Send(ProcessSendingMessage(message));
         }
 
         /// <summary>

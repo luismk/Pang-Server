@@ -8,13 +8,13 @@ namespace LoginServer.Cmd
         byte m_flag;
         protected override string _getName { get; set; } = "CmdAddFirstLogin";
 
-        public CmdAddFirstLogin(int _uid, byte _flag) : this(true)
+        public CmdAddFirstLogin(int _uid, byte _flag)
         {
             m_uid = _uid;
             m_flag = _flag;
         }
 
-        public CmdAddFirstLogin(bool wait = false) : base(wait)
+        public CmdAddFirstLogin()
         {
         }
 

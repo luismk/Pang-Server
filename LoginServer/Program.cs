@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using LoginServer.Cmd;
 using LoginServer.ServerTcp;
 using LoginServer.Session;
 using PangyaAPI.SQL.DATA.Cmd;
+using PangyaAPI.SQL.DATA.TYPE;
+using PangyaAPI.Utilities;
 using snmdb = PangyaAPI.SQL.Manager;
 namespace LoginServer
 {
@@ -12,7 +15,6 @@ namespace LoginServer
         static void Main(string[] args)
         {
             AppServer = new LoginServerTcp();//chama a class com servidor imbutido
-
             if (AppServer.StartingServer())           //inicializa o server
             {
                 AppServer.NewSessionConnected += Handle_NewSessionConnected;
@@ -36,6 +38,18 @@ namespace LoginServer
                         AppServer.Restart();//faço o servidor parar de rodar ou simplesmente não ira mais receber conexao!
                         break;
 
+                    }
+                    if (key == "server on")
+                    {
+                        Console.WriteLine("Server Accept players ~~~");
+                        AppServer.setIsUnderMaintenance(true);//faço o servidor parar de rodar ou simplesmente não ira mais receber conexao!
+                        break;
+                    }
+                    if (key == "server off")
+                    {
+                        Console.WriteLine("Server close players ~~~");
+                        AppServer.setIsUnderMaintenance(false);//faço o servidor parar de rodar ou simplesmente não ira mais receber conexao!
+                        break;
                     }
                 }
             }

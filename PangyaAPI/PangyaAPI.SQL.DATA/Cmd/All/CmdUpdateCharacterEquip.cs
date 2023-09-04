@@ -16,14 +16,10 @@ namespace PangyaAPI.SQL.DATA.Cmd
         int m_uid;
         int m_character_id;
         protected override string _getName { get; set; } = "CmdUpdateCharacterEquip";
-        public CmdUpdateCharacterEquip(int _uid, int character_id) : this(true)
+        public CmdUpdateCharacterEquip(int _uid, int character_id)
         {
             m_uid = _uid;
             m_character_id = character_id;
-        }
-
-        public CmdUpdateCharacterEquip(bool _wait) : base(_wait)
-        {
         }
 
         protected override void lineResult(ctx_res _result, uint _index_result)

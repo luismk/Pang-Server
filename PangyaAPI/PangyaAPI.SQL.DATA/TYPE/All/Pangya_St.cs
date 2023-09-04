@@ -5,26 +5,29 @@ using System.Runtime.InteropServices;
 
 namespace PangyaAPI.SQL.DATA.TYPE
 {
+  public  enum IPBanType
+    {
+        IPBlockNormal,
+        IPBlockRange
+    }
+
+   public class IPBan
+    {
+        public IPBanType Type { get; set; }
+        public uint IP { get; set; }
+        public uint Mask { get; set; }
+    }
 
     // que guarda a estrutura de bits da propriedade do server
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 4)]
     public class uProperty
     {
         public uProperty(uint _ul = 0u)
         {
+             ulProperty = _ul;
         }
-        public void clear()
-        {
-            ulProperty = 0u;
-        }
-        public uint ulProperty;
-    }
-
-    public class uPropertyEx : uProperty
-    {
-        public uPropertyEx(uint prop)
-        {
-            ulProperty = prop;
-        }
+        [field: MarshalAs(UnmanagedType.U4, SizeConst = 4)]
+        public uint ulProperty { get; set; }
         public _stBit stBit;
         public struct _stBit
         {
@@ -36,22 +39,17 @@ namespace PangyaAPI.SQL.DATA.TYPE
             public uint grand_prix; // = 0; // Grand Prix
         }
     }
-
     // que guarda a estrutura de bits do event flag do server
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 2)]
     public class uEventFlag
     {
+        public uEventFlag(short ul = 0)
+        {
+            usEventFlag = ul;
+            stBit = new _stBit();
+        }
+        [field: MarshalAs(UnmanagedType.U2, SizeConst = 2)]
         public short usEventFlag { get; set; }
-    }
-
-
-
-    // que guarda a estrutura de bits do event flag do server
-    [StructLayout(LayoutKind.Sequential, Size = 1)]
-    public class uEventFlagEx : uEventFlag
-    {
-        public uEventFlagEx()
-        { stBit = new _stBit(); }
         public _stBit stBit;
         [StructLayout(LayoutKind.Sequential)]
         public class _stBit
@@ -123,6 +121,7 @@ namespace PangyaAPI.SQL.DATA.TYPE
             return array[0];
         }
     }
+
     public class uFlag
     {
         public uFlag(ulong _ull = 0u)
@@ -175,9 +174,11 @@ namespace PangyaAPI.SQL.DATA.TYPE
         [field: MarshalAs(UnmanagedType.ByValTStr, SizeConst = 18)]
         public string IP { get; set; }
         public int Port { get; set; }
+        [field: MarshalAs(UnmanagedType.Struct)]
         public uProperty Property { get; set; }
         public int AngelicWingsNum { get; set; }
-        public uEventFlag EventFlag;
+        [field: MarshalAs(UnmanagedType.Struct)]
+        public uEventFlag EventFlag { get; set; }
         public short EventMap { get; set; }
         public short AppRate { get; set; }
         public short Unknown { get; set; }
@@ -210,13 +211,10 @@ namespace PangyaAPI.SQL.DATA.TYPE
         [field: MarshalAs(UnmanagedType.Struct)]
         public RateConfigInfo Rate { get; set; }
         public uFlag flag;
-        public new uEventFlagEx EventFlag { get; set; }
-        public new uPropertyEx Property { get; set; }
         public ServerInfoEx()
         {
             base.Init();
             Rate = new RateConfigInfo();
-            EventFlag = new uEventFlagEx();
             flag = new uFlag(0);
         }
         public void SetInit()

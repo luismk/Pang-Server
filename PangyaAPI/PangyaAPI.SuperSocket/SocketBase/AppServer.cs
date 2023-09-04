@@ -139,11 +139,9 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
 
             //Inicia Thread para exec. registrar/att o servidor
-            var t1 = new Thread(new ThreadStart(AppRegisterServer));
-            t1.Start();
+            AppRegisterServer();
             //Inicia Thread para monitor
-            var t2 = new Thread(new ThreadStart(AppMonitor));
-            t2.Start();
+            AppMonitor();
 
             return true;
         }
@@ -179,11 +177,11 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 Port = Ini.ReadInt32("SERVERINFO", "PORT", 10103),
                 IP = Ini.ReadString("SERVERINFO", "IP", "127.0.0.1"),
                 MaxUser = Ini.ReadInt32("SERVERINFO", "MAXUSER", 2001),
-                Property = new uPropertyEx(Ini.ReadUInt32("SERVERINFO", "PROPERTY", 2048)),
+                Property = new uProperty(Ini.ReadUInt32("SERVERINFO", "PROPERTY", 2048)),
                 Auth_IP = Ini.ReadString("AUTHSERVER", "IP", "127.0.0.1"),
                 Auth_Port = Ini.ReadUInt32("AUTHSERVER", "PORT", 7997),
                 Rate = new RateConfigInfo(),
-                EventFlag = new uEventFlagEx(),
+                EventFlag = new uEventFlag(),
                 flag = new uFlag(0)
             };
         }
@@ -245,18 +243,18 @@ namespace PangyaAPI.SuperSocket.SocketBase
         }
         public void Send(TAppSession session, Packet packet)
         {
-            session.Send(packet);
+            session.Send(ref packet, true);
         }
 
         public void Send(TAppSession session, byte[] packet)
         {
-            session.Send(packet);
+            session.Send(packet, true);
         }
         public void SendToAll(Packet packet)
         {
             foreach (var session in m_SessionDict.Values)
             {
-                session.Send(packet);
+                session.Send(ref packet, true);
             }
         }
 
@@ -321,14 +319,15 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
             if ((sessionID != uint.MaxValue))
             {
-                TAppSession removedSession;
-                if (!m_SessionDict.TryRemove(sessionID, out removedSession))
+                if (!m_SessionDict.TryRemove(sessionID, out TAppSession removedSession))
                 {
-                //    if (Logger.IsErrorEnabled)
-                _smp.Message_Pool.push("Failed to remove this session, Because it has't been in session container!");
+                    _smp.Message_Pool.push("Failed to remove this session, Because it has't been in session container!");
+                }
+                else
+                {
+                    WriteConsole.WriteLine($"[AppServer::OnSessionClosed][Log] Player[OID => {session?.m_oid}, ID => {session?.GetID()}, Connection => {session?.GetAdress}]", ConsoleColor.Red);
                 }
             }
-
             base.OnSessionClosed(session, reason);
         }
       

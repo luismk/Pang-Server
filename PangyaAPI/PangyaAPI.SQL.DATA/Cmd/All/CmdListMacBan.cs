@@ -16,13 +16,9 @@ namespace PangyaAPI.SQL.DATA.Cmd
         List<string> v_list_mac_ban;
         protected override string _getName { get; set; } = "CmdListMacBan";
 
-        public CmdListMacBan() : this(true)
+        public CmdListMacBan()
         {
-            v_list_mac_ban =new List<string>();
-        }
-
-        public CmdListMacBan(bool wait = false) : base(wait)
-        {
+            v_list_mac_ban = new List<string>();
         }
 
         protected override void lineResult(ctx_res _result, uint _index_result)
@@ -54,6 +50,10 @@ namespace PangyaAPI.SQL.DATA.Cmd
 
         public List<string> getList()
         {
+            if (v_list_mac_ban == null)
+            {
+                v_list_mac_ban = new List<string>();
+            }
             return v_list_mac_ban;
         }
 

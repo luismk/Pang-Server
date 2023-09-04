@@ -20,9 +20,6 @@ namespace PangyaAPI.SQL.Manager
 			normalManager.create(_db_instance_num);
 		}
 	}
-
-	public static class test
-	{ }
 	public partial class NormalManager
 	{
 		protected List<NormalDB> m_dbs = new List<NormalDB>();
@@ -39,13 +36,6 @@ namespace PangyaAPI.SQL.Manager
 			{ 
 				m_dbs.Add(new NormalDB());
 			}
-
-			init();
-		}
-		public void Dispose()
-		{
-
-			destroy();
 		}
 		public void create(uint _db_instance_num = 26)
 		{
@@ -74,7 +64,7 @@ namespace PangyaAPI.SQL.Manager
 						// Initialize DB Instance
 						if (m_dbs[i] != null)
 						{
-							m_dbs[i].init();
+							m_dbs[i].Init();
 						}
 					}
 
@@ -99,31 +89,7 @@ namespace PangyaAPI.SQL.Manager
 				m_db_instance_num = 26;
 		}
 
-        public void init()
-		{
-
-		}
-		public void destroy()
-		{
-
-			
-			m_state = false;
-		}
-		public void checkIsDeadAndRevive()
-		{
-
-			// Verifica DB Instance Number
-			checkDBInstanceNumAndFix();
-
-			for (var i = 0; i < m_db_instance_num && i < m_dbs.Count(); ++i)
-			{
-				if (m_dbs[i] != null)
-				{
-					m_dbs[i].checkIsDeadAndRevive();
-				}
-			}
-		}
-
+        
 		public int add(NormalDB.msg_t _msg)
 		{
             _msg.execQuery();

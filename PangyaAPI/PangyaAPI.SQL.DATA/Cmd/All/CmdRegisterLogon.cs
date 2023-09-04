@@ -9,12 +9,12 @@ namespace PangyaAPI.SQL.DATA.Cmd
         int m_uid = -1;
         int m_option = 0;
 
-        public CmdRegisterLogon(int _uid, int _option) : this(true)
+        public CmdRegisterLogon(int _uid, int _option)
         {
             m_uid = _uid;
             m_option = _option;
         }
-        public CmdRegisterLogon(bool wait = false) : base(wait)
+        public CmdRegisterLogon()
         {
         }
 

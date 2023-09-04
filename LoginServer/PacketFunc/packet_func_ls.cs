@@ -10,15 +10,12 @@ using LoginServer.ServerTcp;
 using LoginServer.Defines;
 using PangyaAPI.SuperSocket.SocketBase;
 using LoginServer.Session;
-using PangyaAPI.Cryptor.HandlePacket;
-
+using snmdb = PangyaAPI.SQL.Manager;
 namespace LoginServer.PacketFunc
 {
-
     public static class packet_func_ls
     {
         #region Call Packet
-
         public static void packet001(ParamDispatch _arg1)
         {
             try
@@ -27,15 +24,13 @@ namespace LoginServer.PacketFunc
             }
             catch (Exception)
             {
-
-                throw;
+                _arg1._session.Close();
             }
         }
 
         public static void packet003(ParamDispatch _arg1)
         {
             string auth_key_game = "";
-            var pd = (Player)_arg1._session;
             var _session = (Player)_arg1._session;
             var p = _arg1._packet;
             try
@@ -49,14 +44,14 @@ namespace LoginServer.PacketFunc
                 // Registra o logon no server_uid do player_uid
                 var cmd_rls = new CmdRegisterLogonServer(_session.m_pi.uid, server_uid);
 
-                cmd_rls.waitEvent();
+                cmd_rls.ExecCmd();
 
                 if (cmd_rls.getException().getCodeError() != 0)
                     throw cmd_rls.getException();
 
                 var cmd_auth_key_game = new CmdAuthKeyGame(_session.m_pi.uid, server_uid);
 
-                cmd_auth_key_game.waitEvent();
+                cmd_auth_key_game.ExecCmd();
 
                 if (cmd_auth_key_game.getException().getCodeError() != 0)
                     throw cmd_auth_key_game.getException();
@@ -103,7 +98,6 @@ namespace LoginServer.PacketFunc
 
         internal static void packet008(ParamDispatch _arg1)
         {
-            var pd = (Player)_arg1._session;
             var _session = (Player)_arg1._session;
             var p = _arg1._packet;
             try
@@ -151,7 +145,7 @@ namespace LoginServer.PacketFunc
                 var cmd_afs = new CmdAddFirstSet(_session.m_pi.uid);
 
 
-                cmd_ac.waitEvent();
+                cmd_ac.ExecCmd();
 
                 if (cmd_ac.getException().getCodeError() != 0)
                     throw cmd_ac.getException();
@@ -159,7 +153,7 @@ namespace LoginServer.PacketFunc
                 // Info Character Add com o Id gerado no banco de dados
                 ci = cmd_ac.getInfo();
 
-                cmd_afs.waitEvent();
+                cmd_afs.ExecCmd();
 
                 if (cmd_afs.getException().getCodeError() != 0)
                     throw cmd_afs.getException();
@@ -167,7 +161,7 @@ namespace LoginServer.PacketFunc
                 // Update Character Equipado no banco de dados
                 var cmd_uce = new CmdUpdateCharacterEquip(_session.m_pi.uid, (int)ci.id);
 
-                cmd_uce.waitEvent();
+                cmd_uce.ExecCmd();
 
                 if (cmd_uce.getException().getCodeError() != 0)
                     throw cmd_uce.getException();
@@ -175,7 +169,7 @@ namespace LoginServer.PacketFunc
                 // concerta o character :)
                 var cmd_ucf = new CmdFuncPartsCharacter(_session.m_pi.uid, (int)ci._typeid);
 
-                cmd_ucf.waitEvent();
+                cmd_ucf.ExecCmd();
 
                 if (cmd_ucf.getException().getCodeError() != 0)
                     throw cmd_ucf.getException();
@@ -256,7 +250,7 @@ namespace LoginServer.PacketFunc
                 {
                     var cmd_vn = new CmdVerifyNick(wnick);
 
-                    cmd_vn.waitEvent();
+                    cmd_vn.ExecCmd();
 
                     if (cmd_vn.getException().getCodeError() != 0)
                         throw cmd_vn.getException();
@@ -312,14 +306,14 @@ namespace LoginServer.PacketFunc
 
                 var cmd_sn = new CmdSaveNick(_session.m_pi.uid, wnick);
 
-                cmd_sn.waitEvent();
+                cmd_sn.ExecCmd();
 
                 if (cmd_sn.getException().getCodeError() != 0)
                     throw cmd_sn.getException();
 
                 var cmd_afl = new CmdAddFirstLogin(_session.m_pi.uid, 1);
 
-                cmd_afl.waitEvent();
+                cmd_afl.ExecCmd();
 
                 if (cmd_afl.getException().getCodeError() != 0)
                     throw cmd_afl.getException();
@@ -330,7 +324,7 @@ namespace LoginServer.PacketFunc
                 // Aqui colocar para verificar se ele já fez o first set, se não envia o pacote do first set, se não success_login
                 var cmd_fsc = new CmdFirstSetCheck(_session.m_pi.uid, true/*Waiter*/);
 
-                cmd_fsc.waitEvent();
+                cmd_fsc.ExecCmd();
 
                 if (cmd_fsc.getException().getCodeError() != 0)
                     throw cmd_fsc.getException();
@@ -389,40 +383,58 @@ namespace LoginServer.PacketFunc
         #endregion
 
         #region Response Packet
-        public static Packet pacote001(Player _session, byte option = 0)
+        public static Packet pacote001(Player _session, byte option = 0, int sub_opt =0)
         {
             Packet p = new Packet();
 
             p.init_plain(0x001);
 
             p.AddByte(option);  // OPTION 1 SENHA OU ID ERRADO
-
-            if (option == 0)
+            switch (option)
             {
-                p.AddString(_session.m_pi.id);
-                p.AddInt32(_session.m_pi.uid);
-                p.AddInt32(_session.m_pi.m_cap);
-                p.AddInt16(_session.m_pi.level);           // 1 level, 1 pc bang(ACHO), com base no S4
-                p.AddInt32(0);                              // valor 0 Unknown
-                p.AddInt32(5);                              // valor 5 Unknown
-                p.AddBuffer(new _SYSTEMTIME(true), 19);	// Time Build Login Server (ACHO)							- JP S9 ler mais ignora ele
-                p.AddZeroByte(3);   // Time Build Login Server (ACHO)							- JP S9 ler mais ignora ele
-                p.AddString("302540");                      // Alguma AuthKey aleatória para minha conta que eu não sei - JP S9 ler mais ignora ele
-                p.AddInt32(0);                             // Unknown valor - JP S9 ler mais ignora ele
-                p.AddInt32(0);                             // Unknown valor - JP S9 ler mais ignora ele
-                p.AddString(_session.m_pi.nickname);
-                p.AddInt16(0);
-            }
-            else if (option == 1)
-                p.AddInt32(0);  // add 4 bytes vazios
-            else if (option == 0xD8)
-            {       // First Login
-                p.AddInt32(-1);
-                p.AddInt16(0);
-            }
-            else if (option == 0xD9)        // First Set
-                p.AddInt16(0);
+                case 0:
+                    p.AddString(_session.m_pi.id);
+                    p.AddInt32(_session.m_pi.uid);
+                    p.AddInt32(_session.m_pi.m_cap);
+                    p.AddInt16(_session.m_pi.level);           // 1 level, 1 pc bang(ACHO), com base no S4
+                    p.AddInt32(0);                              // valor 0 Unknown
+                    p.AddInt32(5);                              // valor 5 Unknown
+                    p.AddBuffer(new _SYSTEMTIME(true), 19); // Time Build Login Server (ACHO)							- JP S9 ler mais ignora ele
+                    p.AddZeroByte(3);   // Time Build Login Server (ACHO)							- JP S9 ler mais ignora ele
+                    p.AddString("302540");                      // Alguma AuthKey aleatória para minha conta que eu não sei - JP S9 ler mais ignora ele
+                    p.AddInt32(0);                             // Unknown valor - JP S9 ler mais ignora ele
+                    p.AddInt32(0);                             // Unknown valor - JP S9 ler mais ignora ele
+                    p.AddString(_session.m_pi.nickname);
+                    p.AddInt16(0);
+                    break;
+                case 1:
+                    p.AddInt32(0);  // add 4 bytes vazios
+                    break;
+                case 0xD8:
+                    // First Login
+                    p.AddInt32(-1);
+                    p.AddInt16(0);
+                    break;
+                case 0xD9:
+                    p.AddInt16(0);
+                    break;
+                case 0x0c:
+                case 0xE2:
+                case 16:
+                    p.AddInt32(sub_opt);
+                    break;
+                case 7:
 
+                    var tempo = _session.m_pi.block_flag.m_id_state.block_time / 60 / 60/*Hora*/; // Hora
+
+                    p.AddInt32(_session.m_pi.block_flag.m_id_state.block_time == -1 || tempo == 0 ? 1/*Menos de uma hora*/ : tempo);   // Block Por Tempo
+                    // Aqui pode ter uma  com mensagem que o pangya exibe
+                    //p.AddString("ola");
+                    break;
+               
+                default:
+                    break;
+            }            
             return p;
         }
 
@@ -431,15 +443,15 @@ namespace LoginServer.PacketFunc
             if (s == null)
                 throw new exception("[packet_func::session_send][Error] session *s is nullptr.", STDA_ERROR_TYPE.PACKET_FUNC_LS);
 
-            var mb = p.GetPlainBuf();
-            s.Send(mb.Encrypt_Buff(s.m_key));
+            s.Send(ref p, true);
 
-            #if _RELEASE
+#if _RELEASE
             if(_debug == 1)
             {
                 //_smp.Message_Pool.push($"[SEND_PACKET_LOG]: PacketSize({p.GetBytes.Length}) \t\n{p.GetBytes.HexDump()}");
             }
-            #endif
+#endif
+            p.Clear();
         }
         public static void pacote00F(ref Packet p, Player _session, int option = 1)
         {
@@ -474,26 +486,28 @@ namespace LoginServer.PacketFunc
 
                 var cmd_server_list = new CmdServerList(TYPE_SERVER.GAME);
 
-
-                cmd_server_list.waitEvent();
+                snmdb::NormalManagerDB.add(0, cmd_server_list, null, null);
+                cmd_server_list.ExecCmd();
 
                 if (cmd_server_list.getException().getCodeError() != 0)
                     throw cmd_server_list.getException();
 
                 sis = cmd_server_list.getServerList();
 
-                cmd_server_list = new CmdServerList(TYPE_SERVER.MSN);
+                cmd_server_list.setType(TYPE_SERVER.MSN);
 
                 var cmd_auth_key_login = new CmdAuthKeyLogin(_session.m_pi.uid);
 
-                cmd_server_list.waitEvent();
+                snmdb::NormalManagerDB.add(0, cmd_auth_key_login, null, null);
+                snmdb::NormalManagerDB.add(0, cmd_server_list, null, null);
+                cmd_server_list.ExecCmd();
 
                 if (cmd_server_list.getException().getCodeError() != 0)
                     throw cmd_server_list.getException();
 
                 msns = cmd_server_list.getServerList();
 
-                cmd_auth_key_login.waitEvent();
+                cmd_auth_key_login.ExecCmd();
 
                 if (cmd_auth_key_login.getException().getCodeError() != 0)
                     throw cmd_auth_key_login.getException();
@@ -507,8 +521,9 @@ namespace LoginServer.PacketFunc
                 {
                     var cmd_macro_user = new CmdChatMacroUser(_session.m_pi.uid);
 
+                    snmdb::NormalManagerDB.add(0, cmd_macro_user, null, null);
 
-                    cmd_macro_user.waitEvent();
+                    cmd_macro_user.ExecCmd();
 
                     if (cmd_macro_user.getException().getCodeError() != 0)
                         throw cmd_macro_user.getException();
@@ -516,13 +531,13 @@ namespace LoginServer.PacketFunc
                     _cmu = cmd_macro_user.getMacroUser();
                 }
 
-                var ip = (_session.m_ip);
+                var ip = _session.m_ip;
 
                 // RegisterLogin do Player
                 var cmd_rpl = new CmdRegisterPlayerLogin(_session.m_pi.uid, ip, ls.m_si.UID);
+                snmdb::NormalManagerDB.add(0, cmd_rpl, null, null);
 
-
-                cmd_rpl.waitEvent();
+                cmd_rpl.ExecCmd();
 
                 if (cmd_rpl.getException().getCodeError() != 0)
                     throw cmd_rpl.getException();

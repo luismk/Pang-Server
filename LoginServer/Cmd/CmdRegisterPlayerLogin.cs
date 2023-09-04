@@ -18,14 +18,14 @@ namespace LoginServer.Cmd
         string m_ip;
         protected override string _getName { get; set; } = "CmdRegisterPlayerLogin";
 
-        public CmdRegisterPlayerLogin(int _uid, string _ip, int server_uid) : this(true)
+        public CmdRegisterPlayerLogin(int _uid, string _ip, int server_uid)
         {
             m_uid = _uid;
             m_ip = _ip;
             m_server_uid = server_uid;
         }
 
-        public CmdRegisterPlayerLogin(bool wait = false) : base(wait)
+        public CmdRegisterPlayerLogin()
         {
         }
 

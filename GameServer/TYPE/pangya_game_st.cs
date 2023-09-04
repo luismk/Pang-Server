@@ -68,7 +68,7 @@ namespace GameServer.TYPE
         }
     }
     // MemberInfo dados principais do player, tem id, nick, guild, level, exp, e etc)
-    [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 261)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 261)]
     public class MemberInfo
     {
         public MemberInfo()
@@ -116,17 +116,16 @@ namespace GameServer.TYPE
 
     // MemberInfoEx extendido tem o uid, limite papel shop e tutorial,
     // so os que nao manda para o pangya no pacote MemberInfo
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class MemberInfoEx : MemberInfo
     {
         public MemberInfoEx()
         {
             clear();
-            capability = new uCapabilityEx();
+            capability = new uCapability();
             state_flag = new uMemberInfoStateFlagEx();
             papel_shop_last_update = new PangyaTime();
         }
-        public new uCapabilityEx capability;
         public new uMemberInfoStateFlagEx state_flag;
         public uint uid;
         public uint guild_point;
@@ -144,16 +143,25 @@ namespace GameServer.TYPE
     }
 
     // Union Capability, que guarda a estrutura de bits do Capability do Player
-    [StructLayout(LayoutKind.Sequential, Pack = 2)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 4)]
     public class uCapability
     {
-        public uint ulCapability { get; set; }
-    }
-    [StructLayout(LayoutKind.Sequential, Pack = 2)]
-    public class uCapabilityEx : uCapability
-    {
+        [field: MarshalAs(UnmanagedType.U4, SizeConst = 4)]
+        public uint ulCapability 
+        {
+                      get;
+            set; 
+        }
+
         public _stBit stBit;
-        public struct _stBit
+        public uCapability(uint ul = 0)
+        {
+            ulCapability = ul;
+            stBit = new _stBit();
+            setState();
+        }
+
+        public class _stBit
         {
             public uint A_I_MODE;                    // Inteligência Artificial Modo
             public uint un1;                         // Unknwon
@@ -183,21 +191,12 @@ namespace GameServer.TYPE
                     break;
             }
         }
-     
     }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class uMemberInfoStateFlag
     {
+        [field: MarshalAs(UnmanagedType.U2, SizeConst = 2)]
         public short ucByte { get; set; }
-    }
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    public class uMemberInfoStateFlagEx : uMemberInfoStateFlag
-    {
-        public uMemberInfoStateFlagEx()
-        {
-            stFlagBit = new _stBit();
-        }
         public _stBit stFlagBit { get; set; }
         public class _stBit
         {
@@ -211,9 +210,18 @@ namespace GameServer.TYPE
             public byte quiter_2 = 1;         // Quit rate maior que 41%
         }
     }
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public class uMemberInfoStateFlagEx : uMemberInfoStateFlag
+    {
+        public uMemberInfoStateFlagEx()
+        {
+            stFlagBit = new _stBit();
+        }
+      
+    }
 
     // Player Papel Shop Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class PlayerPapelShopInfo
     {
         public short remain_count;
@@ -228,19 +236,16 @@ namespace GameServer.TYPE
     }
 
     // Medal Win
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class uMedalWin
     {
-        public byte ucMedal;
-    }
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    public class uMedalWinEx : uMedalWin
-    {
-        public uMedalWinEx(stMedal medal)
-        {
-
-        }
+        [field: MarshalAs(UnmanagedType.U1, SizeConst = 1)]
+        public byte ucMedal { get; set; }
         public _stMedal stMedal { get; set; }
+       public uMedalWin()
+        {
+            stMedal = new _stMedal();
+        }
         public class _stMedal
         {
             public byte lucky = 1;
@@ -251,7 +256,7 @@ namespace GameServer.TYPE
             public byte best_recovery = 0;
         }
     }
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class UserInfo
     {
         public UserInfo()
@@ -500,7 +505,7 @@ namespace GameServer.TYPE
         }
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class UserInfoEx : UserInfo
     {
         public UserInfoEx()
@@ -522,7 +527,7 @@ namespace GameServer.TYPE
     }
 
     // Medal
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class stMedal
     {
         public void add(stMedal _medal)
@@ -534,7 +539,7 @@ namespace GameServer.TYPE
             best_puttin += _medal.best_puttin;
             best_recovery += _medal.best_recovery;
         }
-        public void add(uMedalWinEx _medal_win)
+        public void add(uMedalWin _medal_win)
         {
             if (_medal_win.stMedal.lucky == 1)
                 lucky++;
@@ -559,7 +564,7 @@ namespace GameServer.TYPE
     /// <summary>
     /// System time public classure based on Windows uinternal SYSTEMTIME public class
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 16)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 16)]
     public class PangyaTime
     {
         /// <summary>
@@ -691,7 +696,7 @@ namespace GameServer.TYPE
     }
 
     // Itens Equipado do Player
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class EquipedItem
     {
         public CharacterInfo char_info;
@@ -706,7 +711,7 @@ namespace GameServer.TYPE
     }
 
     // Itens Equipado do Player
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class UserEquipedItem
     {
         public CharacterInfo char_info;
@@ -718,7 +723,7 @@ namespace GameServer.TYPE
     }
 
     // Estado do Character no Lounge
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class StateCharacterLounge
     {
         void clear()
@@ -735,7 +740,7 @@ namespace GameServer.TYPE
     }
 
     // MyRoom Config
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class MyRoomConfig
     {
         public short allow_enter;     // Se pode ou não entrar no My Room
@@ -751,13 +756,13 @@ namespace GameServer.TYPE
     }
 
     // MyRoom Item
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class MyRoomItem
     {
         public uint id;
         public uint _typeid;
         public short number;
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class Location
         {
             public float x;
@@ -775,7 +780,7 @@ namespace GameServer.TYPE
     }
 
     // Dolfine Locker
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class DolfiniLocker
     {
         public DolfiniLocker()
@@ -814,7 +819,7 @@ namespace GameServer.TYPE
         public List<DolfiniLockerItem> v_item;
     }
     // Dolfini Locker Item
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class DolfiniLockerItem
     {
         public ulong index; // ID do item no dolfini Locker
@@ -827,7 +832,7 @@ namespace GameServer.TYPE
     }
 
     // TradeItem
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class TradeItem
     {
         public uint _typeid;
@@ -848,7 +853,7 @@ namespace GameServer.TYPE
         {
             c = new short[5];
         }
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class Card
         {
             [field: MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
@@ -877,7 +882,7 @@ namespace GameServer.TYPE
 
     /**** Base Item do pacote 0x216 Update Item No Game
 	**/
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class stItem216
     {
         public byte type;
@@ -901,7 +906,7 @@ namespace GameServer.TYPE
     }
 
     // Friend Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class FriendInfo
     {
         public uint uid;
@@ -915,20 +920,20 @@ namespace GameServer.TYPE
     }
 
     // Daily Quest Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class DailyQuestInfo
     {
         public DailyQuestInfo(int _typeid_0, uint _typeid_1, uint _typeid_2, PangyaTime _st)
         {
         }
-        
+
         public PangyaTime date;            // System Time Windows
         [field: MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
         public uint[] _typeid;// [3];    // array[3] Typeid da Quest
     }
 
     // Daily Quest Info User
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class DailyQuestInfoUser
     {
         public uint now_date;      // Data que a quest está (current quest), do sistema de daily quest
@@ -940,7 +945,7 @@ namespace GameServer.TYPE
     }
 
     // Remove Daily Quest
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class RemoveDailyQuestUser
     {
         public uint id;
@@ -948,7 +953,7 @@ namespace GameServer.TYPE
     }
 
     // Add DailyQuest
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class AddDailyQuestUser
     {
         [field: MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
@@ -959,12 +964,12 @@ namespace GameServer.TYPE
     }
 
     // Player Canal Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class PlayerCanalInfo
     {
         public PlayerCanalInfo()
         {
-           clear();
+            clear();
         }
         public void clear()
         {
@@ -987,7 +992,7 @@ namespace GameServer.TYPE
         public uCapability capability;
         public uint title;
         public uint team_point;             // Acho que é o team point
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class uStateFlag
         {
             public byte ucByte;
@@ -1014,7 +1019,7 @@ namespace GameServer.TYPE
             state_flag = new uStateFlagEx();
         }
         public new uStateFlagEx state_flag;
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class uStateFlagEx : uStateFlag
         {
             public _stBit stBit;
@@ -1032,7 +1037,7 @@ namespace GameServer.TYPE
         }
     }
     // Player Room Info {
-    [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 341)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 341)]
     public class PlayerRoomInfo
     {
         public PlayerRoomInfo()
@@ -1065,7 +1070,7 @@ namespace GameServer.TYPE
         public uint char_typeid;       // Character Typeid
         [field: MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
         public uint[] skin;// [6];
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class StateFlag
         {
             public short usFlag;
@@ -1083,7 +1088,7 @@ namespace GameServer.TYPE
         public uint state_lounge;//animate
         public short usUnknown_flg;//Unknown1	// Acho que seja uma flag tbm
         public uint state;//Posture	// Acho que seja estado de "lugar" pelo que lembro
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class stLocation
         {
             public static stLocation operator +(stLocation a, stLocation _add_location)
@@ -1111,7 +1116,7 @@ namespace GameServer.TYPE
         [field: MarshalAs(UnmanagedType.Struct, SizeConst = 12)]
         public stLocation location;
         //----------
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class PersonShop
         {
             public uint active;
@@ -1120,7 +1125,7 @@ namespace GameServer.TYPE
         }
         [field: MarshalAs(UnmanagedType.Struct, SizeConst = 68)]
         public PersonShop shop;
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class uItemBoost
         {
             public short ulItemBoost;
@@ -1139,7 +1144,7 @@ namespace GameServer.TYPE
     }
 
     // Player Room Info Ex
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class PlayerRoomInfoEx : PlayerRoomInfo
     {
         public PlayerRoomInfoEx()
@@ -1152,7 +1157,7 @@ namespace GameServer.TYPE
     }
 
 
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class PlayerRoomInfoExtensed : PlayerRoomInfoEx
     {
         public PlayerRoomInfoExtensed()
@@ -1161,12 +1166,12 @@ namespace GameServer.TYPE
             ci = new CharacterInfo();
         }
         [field: MarshalAs(UnmanagedType.Struct, SizeConst = 4)]
-        public new uCapabilityEx capability;
+        public new uCapability capability;
         [field: MarshalAs(UnmanagedType.Struct, SizeConst = 2)]
         public new StateFlagEx state_flag;
         [field: MarshalAs(UnmanagedType.Struct, SizeConst = 2)]
         public new uItemBoostEx flag_item_boost;
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class StateFlagEx : StateFlag
         {
             public StateFlagEx()
@@ -1178,7 +1183,7 @@ namespace GameServer.TYPE
             {
                 uFlag.stFlagBit.ready = 0; // Unready
             }
-            [StructLayout(LayoutKind.Sequential, Pack = 4)]
+            [StructLayout(LayoutKind.Sequential, Pack = 1)]
             public class _UFlag
             {
                 [field: MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
@@ -1192,7 +1197,7 @@ namespace GameServer.TYPE
                 }
             }
             public _UFlag uFlag { get; set; }
-            [StructLayout(LayoutKind.Sequential, Pack = 4)]
+            [StructLayout(LayoutKind.Sequential, Pack = 1)]
             public class _stFlagBit
             {
                 public byte team;             // Team que está na sala
@@ -1207,7 +1212,7 @@ namespace GameServer.TYPE
                 public byte ready;            // se está pronto para começar o jogo, 0 Unready, 1 Ready
             }
         }
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class uItemBoostEx : uItemBoost
         {
             public class _stItemBoost
@@ -1220,7 +1225,7 @@ namespace GameServer.TYPE
     }
 
     //    // Sala Guild Info(tenho que olhar mais direito se esta correto)
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct RoomGuildInfo
     {
         public uint guild_1_uid;
@@ -1236,7 +1241,7 @@ namespace GameServer.TYPE
     }
 
     //    // Sala Grand Prix Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct RoomGrandPrixInfo
     {
         public uint dados_typeid;
@@ -1246,13 +1251,13 @@ namespace GameServer.TYPE
     }
 
     // Union Natural e Short Game Flag da sala, que guarda a estrutura de bits da flag da sala de natural e short game
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class uNaturalAndShortGame
     {
 
         public uint ulNaturalAndShortGame;
     }
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class uNaturalAndShortGameEx : uNaturalAndShortGame
     {
 
@@ -1266,7 +1271,7 @@ namespace GameServer.TYPE
     }
 
     // SalaInfo
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class RoomInfo
     {
         public enum eCOURSE : byte
@@ -1382,7 +1387,7 @@ namespace GameServer.TYPE
         public uNaturalAndShortGame natural;       // Aqui usa para Short Game Também
         public RoomGrandPrixInfo grand_prix;
     }
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class RoomInfoEx : RoomInfo
     {
         RoomInfoEx()
@@ -1409,7 +1414,7 @@ namespace GameServer.TYPE
         public byte flag_gm;
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class RateValue
     {
         public uint pang;
@@ -1422,7 +1427,7 @@ namespace GameServer.TYPE
 
 
     // Item Pangya Base Para Pacote216
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class ItemPangyaBase
     {
 
@@ -1437,7 +1442,7 @@ namespace GameServer.TYPE
         public byte[] unknown;// [8];
         public short qntd_time;
     }
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class ItemPangya : ItemPangyaBase
     {
         [field: MarshalAs(UnmanagedType.ByValTStr, SizeConst = 9)]
@@ -1449,7 +1454,7 @@ namespace GameServer.TYPE
     }
 
     // BuyItem
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class BuyItem
     {
         public uint id;
@@ -1462,7 +1467,7 @@ namespace GameServer.TYPE
     }
 
     // Email Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class EmailInfo
     {
         public EmailInfo()
@@ -1508,7 +1513,7 @@ namespace GameServer.TYPE
     }
 
     // EmailInfoEx
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class EmailInfoEx : EmailInfo
     {
         EmailInfoEx()
@@ -1519,7 +1524,7 @@ namespace GameServer.TYPE
     }
 
     //// Mail Box
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class MailBox
     {
         public uint id;
@@ -1536,7 +1541,7 @@ namespace GameServer.TYPE
     }
 
     //// Ticket Report Scroll Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class TicketReportScrollInfo
     {
 
@@ -1548,7 +1553,7 @@ namespace GameServer.TYPE
             v_players = new List<stPlayerDados>();
 
         }
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class stPlayerDados
         {
             public stPlayerDados()
@@ -1591,7 +1596,7 @@ namespace GameServer.TYPE
     }
 
     // Estrutura que Guarda as informações dos Convites do Canal
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct InviteChannelInfo
     {
         public short room_number;
@@ -1601,7 +1606,7 @@ namespace GameServer.TYPE
     }
 
     // Command Info, os Comando do Auth Server
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class CommandInfo
     {
 
@@ -1615,7 +1620,7 @@ namespace GameServer.TYPE
     }
 
     //// Update Item
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class UpdateItem
     {
         public enum UI_TYPE : byte
@@ -1631,7 +1636,7 @@ namespace GameServer.TYPE
     }
 
     //// Grand Prix Clear
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class GrandPrixClear
     {
         public uint _typeid;
@@ -1641,7 +1646,7 @@ namespace GameServer.TYPE
     //// Guild Update Activity Info
     //// Guarda os dados das atualizações que os Clubs tem de alterações
     //// Como membro kickado, sair do club e aceito no club
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct GuildUpdateActivityInfo
     {
         public enum TYPE_UPDATE : byte
@@ -1659,7 +1664,7 @@ namespace GameServer.TYPE
         public PangyaTime reg_date;
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class ChangePlayerItemRoom
     {
         public enum TYPE_CHANGE : byte
@@ -1673,7 +1678,7 @@ namespace GameServer.TYPE
             TC_ALL,                 // CHARACTER, CADDIE, CLUBSET e BALL essa é a ordem
             TC_UNKNOWN = 255,
         }
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class stItemEffectLounge
         {
             public enum TYPE_EFFECT : uint
@@ -1695,7 +1700,7 @@ namespace GameServer.TYPE
     }
 
     // Trofel Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class TrofelInfo
     {
         public TrofelInfo()
@@ -1728,7 +1733,7 @@ namespace GameServer.TYPE
             for (i = 0; i < 3; i++)
                 pro_7 = new short[3];
         }
-            public void update(uint _type, byte _rank)
+        public void update(uint _type, byte _rank)
         {
             // Maior que Pro 7
             if (_type > 12)
@@ -1878,25 +1883,25 @@ namespace GameServer.TYPE
 
 
     // Trofel Especial Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class TrofelEspecialInfo
     {
         public uint id;
         public uint _typeid;
         public uint qntd;
     }
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    public class CharacterInfoEx: CharacterInfo
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public class CharacterInfoEx : CharacterInfo
     {
         public CharacterInfoEx()
         {
             base.Init();
         }
-     public   sbyte getSlotOfStatsFromsbyteEquipedPartItem(Stats __stat)
+        public sbyte getSlotOfStatsFromsbyteEquipedPartItem(Stats __stat)
         {   // Get Slot of stats from Character equiped item
 
             sbyte value = 0;
-           // IFF.Part part = null;
+            // IFF.Part part = null;
 
             // Invalid Stats type, Unknown type Stats
             if (__stat > Stats.S_CURVE)
@@ -1911,25 +1916,25 @@ namespace GameServer.TYPE
 
             return value;
         }
-public new void initComboDef()
-{   // Initialize o combo de roupas padrões do Character
+        public new void initComboDef()
+        {   // Initialize o combo de roupas padrões do Character
             Init();
-    if (_typeid == 0)
-        return;
+            if (_typeid == 0)
+                return;
 
-    uint part_typeid = 0;
+            uint part_typeid = 0;
 
-    for (var i = 0; i < (Marshal.SizeOf(parts_typeid) / Marshal.SizeOf(parts_typeid[0])); ++i)
-    {
-        part_typeid = Convert.ToUInt32((((_typeid << 5) | i) << 13) | 0x8000400);
+            for (var i = 0; i < (Marshal.SizeOf(parts_typeid) / Marshal.SizeOf(parts_typeid[0])); ++i)
+            {
+                part_typeid = Convert.ToUInt32((((_typeid << 5) | i) << 13) | 0x8000400);
 
-        //if (sIff.findPart(part_typeid) != null)
-        //    parts_typeid[i] = part_typeid;
-    }
-}
+                //if (sIff.findPart(part_typeid) != null)
+                //    parts_typeid[i] = part_typeid;
+            }
+        }
     }
     // Item Equipados
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class UserEquip
     {
         public UserEquip()
@@ -1954,7 +1959,7 @@ public new void initComboDef()
         public uint[] poster;// [2];          // Poster, tem 2 o poster A e poster B
         public uint m_title => skin_typeid[5];// Titulo Typeid
     }
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class MapStatistics
     {
         public MapStatistics()
@@ -1985,7 +1990,7 @@ public new void initComboDef()
         public uint character_typeid;
         public byte event_score;
     }
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     // MapStatisticsEx esse tem o tipo que não vai no pacote que passa pro cliente
     public class MapStatisticsEx : MapStatistics
     {
@@ -1999,7 +2004,7 @@ public new void initComboDef()
         }
         public byte tipo;             // Tipo, 0 Normal, 0x32 Natural, 0x33 Grand Prix
     }
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     // Caddie Info
     public class CaddieInfo
     {
@@ -2016,7 +2021,7 @@ public new void initComboDef()
     }
 
     // Caddie Info Ex
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class CaddieInfoEx : CaddieInfo
     {
         public void updatePartsEndDate()
@@ -2079,7 +2084,7 @@ public new void initComboDef()
     }
 
     // Club Set Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class ClubSetInfo
     {
         public uint id;
@@ -2098,7 +2103,7 @@ public new void initComboDef()
     }
 
     // Mascot Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class MascotInfo
     {
         public uint id;
@@ -2117,7 +2122,7 @@ public new void initComboDef()
     }
 
     // Mascot Info Ex, tem o IsCash flag nele
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class MascotInfoEx : MascotInfo
     {
         public bool checkUpdate()
@@ -2134,7 +2139,7 @@ public new void initComboDef()
     }
 
     // Item Warehouse
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class WarehouseItem
     {
         public WarehouseItem()
@@ -2155,7 +2160,7 @@ public new void initComboDef()
         public long apply_date { get; set; }
         public long end_date { get; set; }
         public sbyte type { get; set; }
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class UCC
         {
             [field: MarshalAs(UnmanagedType.ByValTStr, SizeConst = 40)]
@@ -2171,7 +2176,7 @@ public new void initComboDef()
             public uint copier { get; set; }                // uid de quem fez a sd
         }
         public UCC ucc;
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class Card
         {
             [field: MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
@@ -2182,7 +2187,7 @@ public new void initComboDef()
             public uint[] NPC { get; set; }
         }
         public Card card;
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class ClubsetWorkshop
         {
             public short flag { get; set; }
@@ -2235,7 +2240,7 @@ public new void initComboDef()
         }
         public ClubsetWorkshop clubset_workshop;
     }
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class WarehouseItemEx : WarehouseItem
     {
         // Date to Calcule dates
@@ -2244,7 +2249,7 @@ public new void initComboDef()
     }
 
     // ClubSet Workshop Last Up Level
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class ClubSetWorkshopLasUpLevel
     {
         public uint clubset_id;
@@ -2252,7 +2257,7 @@ public new void initComboDef()
     }
 
     // ClubSet WorkShop Transform ClubSet In Special ClubSet
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class ClubSetWorkshopTransformClubSet
     {
         public uint clubset_id;
@@ -2260,7 +2265,7 @@ public new void initComboDef()
         public uint transform_typeid;
     }
     // Personal Shop Item
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class PersonalShopItem
     {
         public uint index;     // Index Sequência do item no shop
@@ -2268,7 +2273,7 @@ public new void initComboDef()
     }
 
     // Tutorial Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class TutorialInfo
     {
         public uint getTutoAll()
@@ -2281,7 +2286,7 @@ public new void initComboDef()
     }
 
     // Card Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class CardInfo
     {
         public uint id;
@@ -2297,7 +2302,7 @@ public new void initComboDef()
     }
 
     // Card Equip Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class CardEquipInfo
     {
         public uint id;
@@ -2314,7 +2319,7 @@ public new void initComboDef()
     }
 
     // Card Equip Info Ex
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class CardEquipInfoEx : CardEquipInfo
     {
         public ulong index;
@@ -2323,7 +2328,7 @@ public new void initComboDef()
 
 
     // Message Off
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class MsgOffInfo
     {
 
@@ -2339,12 +2344,12 @@ public new void initComboDef()
     }
 
     // Attendence Reward Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class AttendanceRewardInfo
     {
 
         public byte login;
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class item
         {
 
@@ -2357,7 +2362,7 @@ public new void initComboDef()
     }
 
     // Attendance Reward Info Ex
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class AttendanceRewardInfoEx : AttendanceRewardInfo
     {
 
@@ -2365,7 +2370,7 @@ public new void initComboDef()
     }
 
     // Attendance Reward Item Context
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class AttendanceRewardItemCtx
     {
         public uint _typeid;
@@ -2425,7 +2430,7 @@ public new void initComboDef()
     }
 
     // Time 32, HighTime, LowTime
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class time32
     {
         void setTime(int time)
@@ -2442,7 +2447,7 @@ public new void initComboDef()
     }
 
     // Item Buff (Exemple: Yam, Bola Arco-iris)
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class ItemBuff
     {
         public enum eTYPE : uint
@@ -2470,7 +2475,7 @@ public new void initComboDef()
     }
 
     // Item Buff Ex
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class ItemBuffEx : ItemBuff
     {
         public long index;
@@ -2479,7 +2484,7 @@ public new void initComboDef()
     }
 
     // Guild Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class GuildInfo
     {
         public uint uid;
@@ -2501,49 +2506,31 @@ public new void initComboDef()
     }
 
     // GuildInfoEx
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class GuildInfoEx : GuildInfo
     {
         public PangyaTime create_time;
     }
 
     // Canal Info
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class ChannelInfo
     {
+        public ChannelInfo()
+        {
+            flag = new uFlag();
+        }
         // Union Flag do Canal, que guarda estrutura de bits da flag do Canal
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 4)]
         public class uFlag
         {
-            public ulong ulFlag;
-        }
-        [field: MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-        public string name;// [64];
-        public short max_user;
-        public short curr_user;
-        public sbyte id;
-        public uFlag flag;
-        public void clear()
-        { flag = new uFlag(); name = ""; }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    public class ChannelInfoEx : ChannelInfo
-    {
-        public ChannelInfoEx()
-        {
-            base.clear();
-            flag = new uFlagEx();           
-        }
-        // Union Flag do Canal, que guarda estrutura de bits da flag do Canal
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
-        public class uFlagEx : uFlag
-        {
-            public uFlagEx()
+            [field: MarshalAs(UnmanagedType.U4, SizeConst = 4)]
+            public uint ulFlag { get; set; }
+            public uFlag(uint ul = 0)
             {
+                ulFlag = ul;
                 stBit = new _stBit();
             }
-            [StructLayout(LayoutKind.Sequential, Pack = 4)]
             public class _stBit
             {
                 public uint all;
@@ -2554,11 +2541,22 @@ public new void initComboDef()
                 public uint beginner_between_junior;       // De Beginner a Junior
                 public uint junior_between_senior;  // De Junior a Senior
             }
-            public _stBit stBit;
+            public _stBit stBit { get; set; }
         }
-        public new uFlagEx flag;
+        [field: MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+        public string name { get; set; }
+        [field: MarshalAs(UnmanagedType.U2, SizeConst = 2)]
+        public short max_user;
+        [field: MarshalAs(UnmanagedType.U2, SizeConst = 2)]
+        public short curr_user;
+        [field: MarshalAs(UnmanagedType.U1, SizeConst = 1)]
+        public sbyte id;
+        [field: MarshalAs(UnmanagedType.Struct, SizeConst = 4)]
+        public uFlag flag { get; set; }
+        public void clear()
+        { flag = new uFlag(); name = ""; }
     }
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class ServerInfoEx2 : ServerInfoEx
     {
         public List<ChannelInfo> v_ci;

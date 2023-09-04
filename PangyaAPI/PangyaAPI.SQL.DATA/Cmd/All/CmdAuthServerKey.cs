@@ -11,13 +11,13 @@ namespace PangyaAPI.SQL.DATA.Cmd
         AuthServerKey m_ask;
         protected override string _getName { get; set; } = "CmdAuthServerKey";
 
-        public CmdAuthServerKey(int _uid) : this(true)
+        public CmdAuthServerKey(int _uid)
         {
             m_ask = new AuthServerKey();
             m_server_uid = _uid;
         }
 
-        public CmdAuthServerKey(bool wait = false) : base(wait)
+        public CmdAuthServerKey()
         {
         }
 

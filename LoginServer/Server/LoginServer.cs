@@ -1,6 +1,5 @@
 ﻿using PangyaAPI.Utilities;
 using System;
-using _smp = PangyaAPI.Utilities.Log;
 using LoginServer.TYPE;
 using PangyaAPI.SQL.DATA.Cmd;
 using LoginServer.Cmd;
@@ -9,10 +8,14 @@ using LoginServer.Session;
 using PangyaAPI.SuperSocket.Engine;
 using LoginServer.PacketFunc;
 using snmdb = PangyaAPI.SQL.Manager;
+using _smp = PangyaAPI.Utilities.Log;
+using static PangyaAPI.SuperSocket.Ext.SocketEx;
 namespace LoginServer.ServerTcp
 {
     public class LoginServerTcp : PangyaServer<Player>
     {
+        private bool IsUnderMaintenance;
+
         public int m_access_flag { get; private set; }
         public int m_create_user_flag { get; private set; }
         public int m_same_id_login_flag { get; private set; }
@@ -26,7 +29,7 @@ namespace LoginServer.ServerTcp
             addPacketCall(0x08, new Action<ParamDispatch>(packet_func_ls.packet008));
             addPacketCall(0x0B, new Action<ParamDispatch>(packet_func_ls.packet00B));
         }
-       
+
         public override void ConfigInit()
         {
             base.ConfigInit();
@@ -69,6 +72,11 @@ namespace LoginServer.ServerTcp
             return m_same_id_login_flag == 1;
         }
 
+        public void setIsUnderMaintenance(bool value)
+        {
+            IsUnderMaintenance = value;
+        }
+
         public void RequestLogin(Packet p, Player _session)
         {
 
@@ -76,19 +84,32 @@ namespace LoginServer.ServerTcp
 
             try
             {
-
-
                 // Ler dados do packet de login
-                var result = (LoginData)p.ReadObject(new LoginData());
+                var result = new LoginData();
+                result.id = p.ReadString();
+                result.password = p.ReadString();
+                result.opt_count = p.ReadUInt8();
 
+                for (int i = 0; i < result.opt_count; i++)
+                {
+                    p.ReadInt64(out result.v_opt_unkn[i]);
+                }
+                // MAC Address
+                result.mac_address = p.ReadString();
                 //  Verify Id is valid
                 if (result.id.size() < 2 || System.Text.RegularExpressions.Regex.Match(result.id, (".*[\\^$&,\\?`´~\\|\"@#¨'%*!\\\\].*")).Success)
                     throw new exception("[login_server::RequestLogin][Error] ID(" + result.id
                             + ") invalid, less then 2 characters or invalid character include in id.", STDA_ERROR_TYPE.LOGIN_SERVER);
 
                 // Password to MD5
-                var pass_md5 = Tools.MD5Hash(result.password).ToUpper();
-
+                var pass_md5 = Tools.MD5Hash(result.password).ToUpper();//deixa em letras maiusculas
+                if (IsUnderMaintenance)
+                {
+                   p = packet_func_ls.pacote001(_session, 15);
+                    packet_func_ls.session_send(p, _session, 1); // Erro pass
+                    _session.m_is_authorized = 0;
+                    return;
+                }
                 //try
                 //{
 
@@ -122,14 +143,14 @@ namespace LoginServer.ServerTcp
 #else
                 //gerar outro log aqui
 #endif
-                if (!haveBanList(_session.m_ip, result.mac_address, !result.mac_address.empty()))
+                if (!haveBanList(_session.m_ip, result.mac_address))
                 {   // Verifica se está na list de ips banidos
 
                     var cmd_verifyId = new CmdVerifyID(result.id); // ID
 
                     snmdb::NormalManagerDB.add(0, cmd_verifyId, null, null);
 
-                    cmd_verifyId.waitEvent();
+                    cmd_verifyId.ExecCmd();
 
                     if (cmd_verifyId.getException().getCodeError() != 0)
                         throw cmd_verifyId.getException();
@@ -141,7 +162,7 @@ namespace LoginServer.ServerTcp
 
                         snmdb::NormalManagerDB.add(0, cmd_verifyPass, null, null);
 
-                        cmd_verifyPass.waitEvent();
+                        cmd_verifyPass.ExecCmd();
 
                         if (cmd_verifyPass.getException().getCodeError() != 0)
                             throw cmd_verifyPass.getException();
@@ -154,7 +175,7 @@ namespace LoginServer.ServerTcp
                             snmdb::NormalManagerDB.add(0, cmd_pi, null, null);
 
 
-                            cmd_pi.waitEvent();
+                            cmd_pi.ExecCmd();
 
                             if (cmd_pi.getException().getCodeError() != 0)
                                 throw cmd_pi.getException();
@@ -171,17 +192,17 @@ namespace LoginServer.ServerTcp
                             snmdb::NormalManagerDB.add(0, cmd_fsc, null, null);
 
 
-                            cmd_lc.waitEvent();
+                            cmd_lc.ExecCmd();
 
                             if (cmd_lc.getException().getCodeError() != 0)
                                 throw cmd_lc.getException();
 
-                            cmd_flc.waitEvent();
+                            cmd_flc.ExecCmd();
 
                             if (cmd_flc.getException().getCodeError() != 0)
                                 throw cmd_flc.getException();
 
-                            cmd_fsc.waitEvent();
+                            cmd_fsc.ExecCmd();
 
                             if (cmd_fsc.getException().getCodeError() != 0)
                                 throw cmd_fsc.getException();
@@ -192,32 +213,26 @@ namespace LoginServer.ServerTcp
                             if (!canSameIDLogin() && player_logado != null)
                             {   // Verifica se ja nao esta logado
 
-                                p.init_plain(0x01);
-
-                                p.AddByte(0xE2);
-                                p.AddInt32(5100107);
-
+                                p = packet_func_ls.pacote001(_session, 0xE2, 5100107);
                                 packet_func_ls.session_send(p, _session, 0);
 
                                 _smp.Message_Pool.push("[login_server::RequestLogin][Log] player[UID="
                                         + (pi.uid) + ", ID=" + (pi.id) + ", IP=" + _session.GetAdress + "] ja tem outro Player conectado[UID=" + (player_logado.GetUID())
                                         + ", OID=" + (player_logado.m_oid) + ", IP=" + player_logado.GetAdress + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
+                                shutdown(_session.m_sock, System.Net.Sockets.SocketShutdown.Receive);
                             }
                             else if (pi.m_state == 1)
                             {   // Verifica se já pediu para logar
 
-                                p.init_plain((short)0x01);
-
-                                p.AddUInt8(0xE2);
-                                p.AddInt32(500010); // Já esta logado, ja enviei o pacote de logar
-
-                                packet_func_ls.session_send(p, _session, 0);
+                                p = packet_func_ls.pacote001(_session, 0xE2, 500010);
+                                packet_func_ls.session_send(p, _session, 0); // Já esta logado, ja enviei o pacote de logar
 
                                 if (pi.m_state++ >= 3)  // Ataque, derruba a conexão maliciosa
                                     _smp.Message_Pool.push("[login_server::RequestLogin][Log] Player ja esta logado, o pacote de logar ja foi enviado, player[UID="
                                             + (pi.uid) + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
+                                shutdown(_session.m_sock, System.Net.Sockets.SocketShutdown.Receive);
                             }
                             else
                             {
@@ -225,7 +240,7 @@ namespace LoginServer.ServerTcp
                                 var cmd_vi = new CmdVerifyIP(pi.uid, _session.m_ip);
 
 
-                                cmd_vi.waitEvent();
+                                cmd_vi.ExecCmd();
 
                                 if (cmd_vi.getException().getCodeError() != 0)
                                     throw cmd_vi.getException();
@@ -233,16 +248,12 @@ namespace LoginServer.ServerTcp
                                 if (!Convert.ToBoolean(pi.m_cap & 4) && getAccessFlag() && !cmd_vi.getLastVerify())
                                 {   // Verifica se tem permição para acessar
 
-                                    p.init_plain((short)0x01);
-
-                                    p.AddUInt8(0xE2);
-                                    p.AddInt32(500015); // Acesso restrito
-
-                                    packet_func_ls.session_send(p, _session, 0);
-
+                                    p = packet_func_ls.pacote001(_session, 0xE2, 500015);
+                                    packet_func_ls.session_send(p, _session, 0); // Já esta logado, ja enviei o pacote de logar
                                     _smp.Message_Pool.push("[login_server::RequestLogin][Log] acesso restrito para o player [UID=" + (pi.uid)
                                             + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
+                                    shutdown(_session.m_sock, System.Net.Sockets.SocketShutdown.Receive);
                                 }
                                 else if (pi.block_flag.m_id_state.id_state.ull_IDState != 0)
                                 {   // Verifica se está bloqueado
@@ -267,6 +278,7 @@ namespace LoginServer.ServerTcp
                                                 + "min " + (pi.block_flag.m_id_state.block_time % 60) + "sec"))
                                                 + "]. player [UID=" + (pi.uid) + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
+                                        shutdown(_session.m_sock, System.Net.Sockets.SocketShutdown.Receive);
                                     }
                                     else if (pi.block_flag.m_id_state.id_state.st_IDState.L_BLOCK_FOREVER)
                                     {
@@ -281,6 +293,7 @@ namespace LoginServer.ServerTcp
                                         _smp.Message_Pool.push("[login_server::RequestLogin][Log] Bloqueado permanente. player [UID=" + (pi.uid)
                                                 + ", ID=" + (pi.id) + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
+                                        shutdown(_session.m_sock, System.Net.Sockets.SocketShutdown.Receive);
                                     }
                                     else if (pi.block_flag.m_id_state.id_state.st_IDState.L_BLOCK_ALL_IP)
                                     {
@@ -288,7 +301,7 @@ namespace LoginServer.ServerTcp
                                         // Bloquea todos os IP que o player logar e da error de que a area dele foi bloqueada
 
                                         // Add o ip do player para a lista de ip banidos
-                                        new CmdInsertBlockIp(_session.m_ip, "255.255.255.255").waitEvent();
+                                        new CmdInsertBlockIp(_session.m_ip, "255.255.255.255").ExecCmd();
 
                                         // Resposta
                                         p.init_plain((short)0x01);
@@ -300,6 +313,7 @@ namespace LoginServer.ServerTcp
                                         _smp.Message_Pool.push("[login_server::RequestLogin][Log] Player[UID=" + (_session.m_pi.uid)
                                                 + ", IP=" + (_session.m_ip) + "] Block ALL IP que o player fizer login.", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
+                                        shutdown(_session.m_sock, System.Net.Sockets.SocketShutdown.Receive);
                                     }
                                     else if (pi.block_flag.m_id_state.id_state.st_IDState.L_BLOCK_MAC_ADDRESS)
                                     {
@@ -309,7 +323,7 @@ namespace LoginServer.ServerTcp
                                         // Add o MAC Address do player para a lista de MAC Address banidos
                                         var mac = new CmdInsertBlockMac(result.mac_address);
 
-                                        mac.waitEvent();
+                                        mac.ExecCmd();
                                         // Resposta
                                         p.init_plain((short)0x01);
 
@@ -321,6 +335,7 @@ namespace LoginServer.ServerTcp
                                         _smp.Message_Pool.push("[login_server::RequestLogin][Log] Player[UID=" + (_session.m_pi.uid)
                                                 + ", IP=" + (_session.m_ip) + ", MAC=" + result.mac_address + "] Block MAC Address que o player fizer login.", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
+                                        shutdown(_session.m_sock, System.Net.Sockets.SocketShutdown.Receive);
                                     }
                                     else if (!cmd_flc.getLastCheck())
                                     {   // Verifica se fez o primeiro login
@@ -464,6 +479,8 @@ namespace LoginServer.ServerTcp
 
                             _smp.Message_Pool.push("[login_server::RequestLogin][Log] senha errada. ID: " + cmd_verifyId.getID()
                                     + "  senha: " + pass_md5/*cmd_verifyPass.getPass()*/, _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
+                           
+                            shutdown(_session.m_sock, System.Net.Sockets.SocketShutdown.Receive);
                         }
 
                     }
@@ -482,7 +499,7 @@ namespace LoginServer.ServerTcp
                         var cmd_cu = new CmdCreateUser(cmd_verifyId.getID(), result.password, ip, m_si.UID);
 
 
-                        cmd_cu.waitEvent();
+                        cmd_cu.ExecCmd();
 
                         if (cmd_cu.getException().getCodeError() != 0)
                             throw cmd_cu.getException();
@@ -493,7 +510,7 @@ namespace LoginServer.ServerTcp
 
                         var cmd_pi = new CmdPlayerInfo(pi.uid);
 
-                        cmd_pi.waitEvent();
+                        cmd_pi.ExecCmd();
 
                         if (cmd_pi.getException().getCodeError() != 0)
                             throw cmd_pi.getException();
@@ -514,7 +531,7 @@ namespace LoginServer.ServerTcp
                         packet_func_ls.session_send(p, _session, 1);
                         _session.m_pi.id = result.id;
                         _smp.Message_Pool.push("[login_server::RequestLogin][Log] ID nao existe, ID: " + cmd_verifyId.getID(), _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
-                        OnSessionClosed(_session);
+                        shutdown(_session.m_sock, System.Net.Sockets.SocketShutdown.Receive);
                     }
 
                 }
@@ -524,19 +541,15 @@ namespace LoginServer.ServerTcp
                     p.init_plain((short)0x01);
 
                     p.AddUInt8(16);
-                    p.AddInt32(500012);     // Ban por Região;
 
                     packet_func_ls.session_send(p, _session, 0);
                     _smp.Message_Pool.push("[login_server::RequestLogin][Log] Block por Regiao o IP/MAC: " + (_session.m_ip) + "/" + result.mac_address, _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
+                    shutdown(_session.m_sock, System.Net.Sockets.SocketShutdown.Receive);
                 }
-
             }
-
             catch (exception e)
             {
-
                 _smp.Message_Pool.push("[login_server::RequestLogin][ErrorSystem] " + e.getFullMessageError(), _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
-
                 if (e.getCodeError() == STDA_ERROR_TYPE.LOGIN_SERVER)
                 {
 
@@ -552,11 +565,10 @@ namespace LoginServer.ServerTcp
                     p.init_plain((short)0x01);
 
                     p.AddUInt8(0xE2);
-                    p.AddInt32(500050);     // System Error
 
                     packet_func_ls.session_send(p, _session, 0);
                 }
-
+                shutdown(_session.m_sock, System.Net.Sockets.SocketShutdown.Receive);
             }
         }
         public void SUCCESS_LOGIN(string _from, Player _session)
@@ -608,7 +620,7 @@ namespace LoginServer.ServerTcp
                 // Auth Server não está online, resolver por aqui mesmo
                 var cmd_rl = new CmdRegisterLogon(_session.m_pi.uid, 1);
 
-                cmd_rl.waitEvent();
+                cmd_rl.ExecCmd();
 
                 if (cmd_rl.getException().getCodeError() != 0)
                     throw cmd_rl.getException();
@@ -657,9 +669,9 @@ namespace LoginServer.ServerTcp
 
                 var cmd_verifyId = new CmdVerifyID(id); // ID
 
-                //snmdb::NormalManagerDB::getInstance().Add(0, &cmd_verifyId, nullptr, nullptr);
+                snmdb::NormalManagerDB.add(0, cmd_verifyId, null, null);
 
-                cmd_verifyId.waitEvent();
+                cmd_verifyId.ExecCmd();
 
                 if (cmd_verifyId.getException().getCodeError() != 0)
                     throw cmd_verifyId.getException();
@@ -669,9 +681,9 @@ namespace LoginServer.ServerTcp
 
                 var cmd_pi = new CmdPlayerInfo(cmd_verifyId.getUID());
 
-                //snmdb::NormalManagerDB::getInstance().Add(0, &cmd_pi, nullptr, nullptr);
+                snmdb::NormalManagerDB.add(0, cmd_pi, null, null);
 
-                cmd_pi.waitEvent();
+                cmd_pi.ExecCmd();
 
                 if (cmd_pi.getException().getCodeError() != 0)
                     throw cmd_pi.getException();
@@ -684,9 +696,9 @@ namespace LoginServer.ServerTcp
 
                 var cmd_akli = new CmdAuthKeyLoginInfo(_session.m_pi.uid);
 
-                //snmdb::NormalManagerDB::getInstance().Add(0, &cmd_akli, nullptr, nullptr);
+                snmdb::NormalManagerDB.add(0, cmd_akli, null, null);
 
-                cmd_akli.waitEvent();
+                cmd_akli.ExecCmd();
 
                 if (cmd_akli.getException().getCodeError() != 0)
                     throw cmd_akli.getException();
@@ -705,9 +717,9 @@ namespace LoginServer.ServerTcp
 
                 var cmd_vi = new CmdVerifyIP(_session.m_pi.uid, _session.m_ip);
 
-                //snmdb::NormalManagerDB::getInstance().Add(0, &cmd_vi, nullptr, nullptr);
+                snmdb::NormalManagerDB.add(0, cmd_vi, null, null);
 
-                cmd_vi.waitEvent();
+                cmd_vi.ExecCmd();
 
                 if (cmd_vi.getException().getCodeError() != 0)
                     throw cmd_vi.getException();
@@ -744,7 +756,7 @@ namespace LoginServer.ServerTcp
                         // Bloquea todos os IP que o player logar e da error de que a area dele foi bloqueada
 
                         // Add o ip do player para a lista de ip banidos
-                        //snmdb::NormalManagerDB::getInstance().Add(1, new CmdInsertBlockIP(_session.m_ip, "255.255.255.255"), login_server::SQLDBResponse, this);
+                        snmdb::NormalManagerDB.add(1, new CmdInsertBlockIp(_session.m_ip, "255.255.255.255"), SQLDBResponse, this);
 
                         // Resposta
                         throw new exception("[login_server::requestReLogin][Log] Player[UID=" + (_session.m_pi.uid)
@@ -789,7 +801,7 @@ namespace LoginServer.ServerTcp
 
 
 
-        public override void onHeartBeat()
+        public override void OnHeartBeat()
         {
             try
             {
@@ -818,7 +830,7 @@ namespace LoginServer.ServerTcp
                 packet.AddInt32(_session.m_key);
                 packet.AddInt32(m_si.UID);
                 packet.MakeRaw();
-                var mb = packet.GetMakedBuf().Buffin();               
+                var mb = packet.GetMakedBuf().Buffin;
                 _session.Send(mb);
             }
             catch (Exception ex)

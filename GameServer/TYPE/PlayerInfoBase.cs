@@ -421,7 +421,7 @@ namespace GameServer.TYPE
         public uint state;
         public uint state_lounge;
         public bool m_state_logged;       // State logged que usa no login server, e que eu possa usar aqui, por que tbm tenho que prevenir contra ataques DDoS
-        public uCapabilityEx m_cap => mi.capability;
+        public uCapability m_cap => mi.capability;
         public ulong grand_zodiac_pontos;
 
         public ulong m_legacy_tiki_pts; // Point Shop(Tiki Shop antigo)

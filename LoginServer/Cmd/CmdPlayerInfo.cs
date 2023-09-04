@@ -11,12 +11,12 @@ namespace LoginServer.Cmd
         readonly player_info m_pi = new player_info();
         protected override string _getName { get; set; } = "CmdPlayerInfo";
 
-        public CmdPlayerInfo(int _uid) : this(true)
+        public CmdPlayerInfo(int _uid)
         {
             m_uid = _uid;
         }
 
-        public CmdPlayerInfo(bool wait = false) : base(wait)
+        public CmdPlayerInfo()
         {
         }
 

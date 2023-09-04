@@ -16,12 +16,12 @@ namespace LoginServer.Cmd
         int m_uid = -1;
         protected override string _getName { get; set; } = "CmdAddFirstSet";
 
-        public CmdAddFirstSet(int _uid) : this(true)
+        public CmdAddFirstSet(int _uid)
         {
             m_uid = _uid;
         }
 
-        public CmdAddFirstSet(bool wait = false) : base(wait)
+        public CmdAddFirstSet()
         {
         }
 

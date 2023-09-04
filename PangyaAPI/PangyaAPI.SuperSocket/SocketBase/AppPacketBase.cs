@@ -25,14 +25,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
         public void Clear()
         {
-            if (Buffer != null)
-            {
-                Array.Clear(Buffer, 0, Buffer.Length);
-            }
-            else
-            {
-                Buffer = new byte[1024];
-            }
+            Buffer = new byte[1024];
             IndexR = 0;
             IndexW = 0;
             Size = 0;
@@ -198,18 +191,6 @@ namespace PangyaAPI.SuperSocket.SocketBase
             AddPlain(BitConverter.GetBytes(m_Tipo), sizeof(ushort));
         }
 
-
-        //public void SetKey(byte key)
-        //{
-        //    Message = Pang.ClientDecrypt(MessageCrypted, key);
-
-        //    _stream = new MemoryStream(Message);
-
-        //    _stream.Seek(2, SeekOrigin.Current); //Seek Inicial
-        //    Reader = new PangyaBinaryReader(_stream);
-        //    Writer = new PangyaBinaryWriter();
-        //}
-
         /// <summary>
         /// Decripta o pacote cliente
         /// </summary>
@@ -247,82 +228,77 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 AddPlain(decrypt.Clone(1), phc.Size - 1);
             }
         }
-        ///// <summary>
-        ///// não testado ainda
-        ///// </summary>
-        ///// <param name="_key"></param>
-        ///// <exception cref="AppException"></exception>
-        //public void Make(byte _key)
-        //{
-        //    var encrypt = GetBytes.ServerEncrypt(Key);
+        /// <summary>
+        /// não testado ainda
+        /// </summary>
+        /// <param name="_key"></param>
+        /// <exception cref="AppException"></exception>
+        public void Make(byte _key)
+        {
+          
+            /// ACRISIO REF ///
+            //if (GetBytes == null)
+            //{
+            //  throw new  AppException("Error buf is nullptr em packet::makeFull()", 15);
+            //}
 
-        //    Clear();
+            //Crypt _crypt = null;
+            //PacketHead ph = new PacketHead();
 
-        //    Write(encrypt);
+            //ConversionByte cb = new ConversionByte((uint)GetBytes.Length, 10);
 
-        //    /// ACRISIO REF ///
-        //    //if (GetBytes == null)
-        //    //{
-        //    //  throw new  AppException("Error buf is nullptr em packet::makeFull()", 15);
-        //    //}
+            //byte[] tmp = new byte[cb.GetNumberIS() + 5 + 5];
+            //uint compressOut = 0;
 
-        //    //Crypt _crypt = null;
-        //    //PacketHead ph = new PacketHead();
+            //Compressor _compress = new Compressor();
+            //try
+            //{
+            //   tmp = _compress.CompressData(GetBytes, (uint)GetBytes.Length, ref compressOut);
+            //}
+            //catch (Exception e)
+            //{
+            //    // Clean
+            //    tmp.CleanUp(_compress, _crypt);
+            //    throw;
+            //}
 
-        //    //ConversionByte cb = new ConversionByte((uint)GetBytes.Length, 10);
+            //// Make Packet Head
+            //ph.Size = (byte)(compressOut + 5); // key low and size raw decompressed
 
-        //    //byte[] tmp = new byte[cb.GetNumberIS() + 5 + 5];
-        //    //uint compressOut = 0;
+            //Random rand = new Random(((int)DateTime.UtcNow.Ticks * 7) * ph.Size);
+            //ph.LowKey = (byte)(rand.Next() & 255);
 
-        //    //Compressor _compress = new Compressor();
-        //    //try
-        //    //{
-        //    //   tmp = _compress.CompressData(GetBytes, (uint)GetBytes.Length, ref compressOut);
-        //    //}
-        //    //catch (Exception e)
-        //    //{
-        //    //    // Clean
-        //    //    tmp.CleanUp(_compress, _crypt);
-        //    //    throw;
-        //    //}
+            //_crypt = new Crypt();
 
-        //    //// Make Packet Head
-        //    //ph.Size = (byte)(compressOut + 5); // key low and size raw decompressed
+            //tmp[0] = _crypt.InitKey(_key, ph.LowKey);
 
-        //    //Random rand = new Random(((int)DateTime.UtcNow.Ticks * 7) * ph.Size);
-        //    //ph.LowKey = (byte)(rand.Next() & 255);
+            //cb.PutNumberBuffer(ref tmp);
 
-        //    //_crypt = new Crypt();
-
-        //    //tmp[0] = _crypt.InitKey(_key, ph.LowKey);
-
-        //    //cb.PutNumberBuffer(ref tmp);
-
-        //    //// Maked Reset
-        //    //Clear();
-        //    //// Convert PacketHead to byte array
-        //    //byte[] phBytes = ph.ConvertArray();
-        //    //Write(phBytes);//escreve, porem com tamanho, assim o pacote fica correto na escrita
-        //    //WriteZero(ph.Size);
-        //    //var m_marked = GetBytes;
-        //    //try
-        //    //{
-        //    //    _crypt.Encrypt(tmp, ph.Size - 8, m_marked );
-        //    //}
-        //    //catch (Exception e)
-        //    //{
-        //    //    // Clean
-        //    //    tmp.CleanUp(_compress, _crypt);
-        //    //    throw;
-        //    //}
+            //// Maked Reset
+            //Clear();
+            //// Convert PacketHead to byte array
+            //byte[] phBytes = ph.ConvertArray();
+            //Write(phBytes);//escreve, porem com tamanho, assim o pacote fica correto na escrita
+            //WriteZero(ph.Size);
+            //var m_marked = GetBytes;
+            //try
+            //{
+            //    _crypt.Encrypt(tmp, ph.Size - 8, m_marked );
+            //}
+            //catch (Exception e)
+            //{
+            //    // Clean
+            //    tmp.CleanUp(_compress, _crypt);
+            //    throw;
+            //}
 
 
-        //    //// Clean
-        //    //tmp.CleanUp(_compress, _crypt);
-        //    //m_marked.DebugDump();
-        //    //var decrypt = Pang.ServerDecrypt(m_marked, _key);
-        //    //decrypt.DebugDump();
-        //}
+            //// Clean
+            //tmp.CleanUp(_compress, _crypt);
+            //m_marked.DebugDump();
+            //var decrypt = Pang.ServerDecrypt(m_marked, _key);
+            //decrypt.DebugDump();
+        }
 
         /// <summary>
         /// Create Packet Hello!
@@ -340,20 +316,11 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 LowKey = 0, // low part of key random - 0 nesse pacote porque ele é o primeiro que passa a chave
                 Size = (ushort)(mPlain.IndexW + 1)
             };
-            //0x00,
-            //0x0B, 0x00,//size
-            //0x00, ???
-            //0x00,//size
-            //0x00, //zero
-            //_session.m_key, 0x00, 0x00, 0x00, //key
-            //0x75, 0x27, 0x00, 0x00// 
             byte key = 0;
             switch (m_Tipo)
             {
                 case 0x0B00:// Pacote Raw Login
                     mPlain.Buffer[1] = 0;
-                    //key = mPlain.Buffer[2];
-                    //mPlain.Buffer[2] = 0;
                     break;
                 case 0x2E:      // Pacote Raw MSN
                 case 0x3F:      // Pacote Raw Game
@@ -412,6 +379,30 @@ namespace PangyaAPI.SuperSocket.SocketBase
             value = Marshal.PtrToStructure(ptr, value.GetType());
             Marshal.FreeHGlobal(ptr);
             return value;
+        }
+        public void ReadBuffer(object @value, int size =0)
+        {
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+            if (size <=0)
+            {
+                size = Marshal.SizeOf(value);
+            }
+            byte[] buf = new byte[size];
+
+            ReadBuffer(@buf, size);
+
+            if (buf.Length != size)
+            {
+                throw new Exception(
+                    $"The {nameof(value)} length ({buf.Length}) mismatches the length of the passed structure ({size})");
+            }
+
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+
+            Marshal.Copy(buf, 0, ptr, size);
+           @value = Marshal.PtrToStructure(ptr, @value.GetType());
+            Marshal.FreeHGlobal(ptr);            
         }
 
         public void AddMaked(byte[] buf, int size)
@@ -542,12 +533,13 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 byte[] arr = new byte[size];
 
                 IntPtr ptr = Marshal.AllocHGlobal(size);
-                Marshal.StructureToPtr(value, ptr, false);
+                Marshal.StructureToPtr(value, ptr, true);
                 Marshal.Copy(ptr, arr, 0, size);
                 Marshal.FreeHGlobal(ptr);
                 AddPlain(arr, size);
+                ptr = IntPtr.Zero;
             }
-            catch
+            catch(Exception ex)
             {
             }
         }
@@ -564,7 +556,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 Marshal.FreeHGlobal(ptr);
                 AddPlain(arr, size);
             }
-            catch
+            catch (Exception ex)
             {
             }
         }
@@ -580,8 +572,9 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 Marshal.FreeHGlobal(ptr);
                 AddPlain(arr, size);
             }
-            catch
+            catch (Exception ex)
             {
+
             }
         }
         public void AddBuffer(byte[] buffer)
@@ -960,7 +953,9 @@ namespace PangyaAPI.SuperSocket.SocketBase
         }
         public void Clear()
         {
-            Dispose();
+            mPlain.Clear();
+            mMaked.Clear();
+            m_Tipo = ushort.MaxValue;
         }
         protected virtual void Dispose(bool disposing)
         {

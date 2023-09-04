@@ -16,14 +16,11 @@ namespace PangyaAPI.SQL.DATA.Cmd
         string m_pass = "";
         bool m_lastVerify = false;
        
-        public CmdVerifyPass(int _uid, string pass): this(true)
+        public CmdVerifyPass(int _uid, string pass)
         {
             m_pass = pass;
             m_uid = _uid;
             m_lastVerify = false;
-        }
-        public CmdVerifyPass(bool wait = false) : base(wait)
-        {
         }
 
         protected override void lineResult(ctx_res _result, uint _index_result)

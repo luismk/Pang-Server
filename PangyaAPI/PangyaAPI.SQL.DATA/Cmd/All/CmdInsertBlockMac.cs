@@ -16,12 +16,12 @@ namespace PangyaAPI.SQL.DATA.Cmd
         string m_mac_address;
         protected override string _getName { get; set; } = "CmdInsertBlockMac";
 
-        public CmdInsertBlockMac(string _mac_address) : this(true)
+        public CmdInsertBlockMac(string _mac_address)
         {
             m_mac_address = _mac_address;
         }
 
-        public CmdInsertBlockMac(bool wait = false) : base(wait)
+        public CmdInsertBlockMac()
         {
         }
 

@@ -67,7 +67,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
             onAcceptCompleted(session);
             if (session.Connected)
             {
-                WriteConsole.WriteLine($"[AppServer::onAcceptCompleted][Log] Player[OID => {session?.m_oid}, ID => {session?.GetID()}, Connection => {session?.GetAdress}]", ConsoleColor.Red);
+                WriteConsole.WriteLine($"[AppServer::onAcceptCompleted][Log] Player[OID => {session?.m_oid}, ID => {session?.GetID()}, Connection => {session?.GetAdress}]", ConsoleColor.Green);
             }
             m_si.Curr_User = SessionCount;
             base.OnNewSessionConnected(session);
@@ -76,7 +76,6 @@ namespace PangyaAPI.SuperSocket.SocketBase
         protected override void OnSessionClosed(T session, CloseReason reason = CloseReason.ClientClosing)
         {
             base.OnSessionClosed(session, reason);
-            WriteConsole.WriteLine($"[Player::Disconnected][Log] Player[OID => {session?.m_oid}, ID => {session?.GetID()}, Connection => {session?.GetAdress}]", ConsoleColor.Red);
             m_si.Curr_User = SessionCount;
         }
     }

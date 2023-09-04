@@ -16,13 +16,13 @@ namespace PangyaAPI.SQL.DATA.Cmd
         string m_mask;
         protected override string _getName { get; set; } = "CmdInsertBlockIp";
 
-        public CmdInsertBlockIp(string _ip_address, string mask) : this(true)
+        public CmdInsertBlockIp(string _ip_address, string mask)
         {
             m_ip = _ip_address;
             m_mask = mask;
         }
 
-        public CmdInsertBlockIp(bool wait = false) : base(wait)
+        public CmdInsertBlockIp()
         {
         }
 

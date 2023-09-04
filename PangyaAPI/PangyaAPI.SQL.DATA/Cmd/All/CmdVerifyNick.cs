@@ -16,13 +16,10 @@ namespace PangyaAPI.SQL.DATA.Cmd
         string m_nick = "";
         bool m_check = false;
        
-        public CmdVerifyNick(string nick): this(true)
+        public CmdVerifyNick(string nick)
         {
             m_nick = nick;
             m_check = false;
-        }
-        public CmdVerifyNick(bool wait = false) : base(wait)
-        {
         }
 
         protected override void lineResult(ctx_res _result, uint _index_result)

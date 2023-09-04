@@ -472,15 +472,14 @@ namespace GameServer.PACKET
             if (s == null)
                 throw new Exception("[packet_func::session_send][Error] session *s is nullptr.");
 
-            var mb = p.GetPlainBuf();
-            s.Send(mb.Encrypt_Buff(s.m_key));
+            s.Send(p.GetPlainBuf().Buffin, true);
 #if _RELEASE
             if(_debug == 1)
             {
                 _smp.Message_Pool.push($"[SEND_PACKET_LOG]: PacketSize({p.GetBytes.Length}) \t\n{p.GetBytes.HexDump()}");
             }
 #endif
-            p.Clear();
+            p.Clear();//@! pode esta causando falha aqui
         }
 
 
@@ -492,7 +491,7 @@ namespace GameServer.PACKET
 
             for (var i = 0; i < channel_session.Count(); ++i)
             {
-                channel_session[i].Send(p.GetBuffer());
+                channel_session[i].Send(p.GetBuffer());//@!errado
             }
 
             p.Clear();

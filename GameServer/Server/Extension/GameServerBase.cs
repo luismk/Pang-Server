@@ -182,7 +182,7 @@ namespace GameServer.Server.Extension
 			m_si.Rate.club_mastery = (short)_club_mastery;
 		}
 				
-		public override void onHeartBeat()
+		public override void OnHeartBeat()
 		{
 			try
 			{
@@ -663,7 +663,7 @@ namespace GameServer.Server.Extension
             this.addPacketCall(0x81, packet_func_gs.packet081);
         }
         public virtual void init_load_channels() {
-			ChannelInfoEx ci = new ChannelInfoEx();
+			ChannelInfo ci = new ChannelInfo();
 			int num_channel = Ini.readInt("CHANNELINFO", "NUM_CHANNEL");
 
 			for (sbyte i = 0; i < num_channel; ++i)
@@ -674,7 +674,7 @@ namespace GameServer.Server.Extension
 
 				try
 				{
-					ci.flag.ulFlag = Ini.ReadUInt64("CHANNEL" +(i + 1), "FLAG");
+					ci.flag.ulFlag = Ini.ReadUInt32("CHANNEL" +(i + 1), "FLAG");
 				}
 				catch (Exception e) {
 
@@ -716,7 +716,7 @@ namespace GameServer.Server.Extension
                 packet.AddByte(1);	// OPTION 2
                 packet.AddByte(_session.m_key);	// Key
                 packet.MakeRaw();
-                var mb = packet.GetMakedBuf().Buffin();
+                var mb = packet.GetMakedBuf().Buffin;
                 _session.Send(mb);
             }
             catch (Exception ex)

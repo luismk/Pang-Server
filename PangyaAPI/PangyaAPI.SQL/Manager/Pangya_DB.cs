@@ -3,6 +3,7 @@ using System.Data;
 using result_set = PangyaAPI.SQL.Result_Set;
 using response = PangyaAPI.SQL.Response;
 using PangyaAPI.SQL.Manager;
+using System;
 
 namespace PangyaAPI.SQL
 {
@@ -10,20 +11,16 @@ namespace PangyaAPI.SQL
     {
         protected ctx_db m_ctx_db = new ctx_db();
         protected mssql _db = new mssql();
-        public Pangya_DB(bool _waitable) 
+        public Pangya_DB() 
         
         {
-            m_waitable = _waitable; m__exception = new exception("");
+            m__exception = new exception("");
             loadIni();
             _db = new mssql(m_ctx_db.ip, m_ctx_db.name, m_ctx_db.user, m_ctx_db.pass, m_ctx_db.port);
             _db.connect();
         }
 
 
-        public Pangya_DB() : this(true)
-        {
-            m__exception = new exception("");
-        }
         public void Dispose() { }
 
         bool loadIni()
@@ -63,17 +60,16 @@ namespace PangyaAPI.SQL
                     clear_response(r);
                 }
             }
-            catch (exception e) { }
+            catch (Exception e)
+            { 
+            m_exception = new exception(e.Message);
+            }
             }
 
         public virtual exception getException() { return m_exception; }
 
 
-        public virtual void waitEvent() { exec(); }
-
-        public virtual void wakeupWaiter() { }
-
-        public virtual bool isWaitable() { return m_waitable; }
+        public virtual void ExecCmd() { exec(); }
 
         public virtual response _insert(string _query)
         {
@@ -133,9 +129,7 @@ namespace PangyaAPI.SQL
             return base.ToString();
         }
         protected exception m__exception { get; set; }
-
         public exception m_exception { get=> m__exception; set=> m__exception = value; }
-        protected bool m_waitable;
     }
 
 }

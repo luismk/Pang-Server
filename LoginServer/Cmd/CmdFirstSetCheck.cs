@@ -17,13 +17,13 @@ namespace LoginServer.Cmd
         bool m_check;
         protected override string _getName { get; set; } = "CmdFirstSetCheck";
 
-        public CmdFirstSetCheck(int _uid, bool _check = false) : this(true)
+        public CmdFirstSetCheck(int _uid, bool _check = false)
         {
             m_uid = _uid;
             m_check = _check;
         }
 
-        public CmdFirstSetCheck(bool wait = false) : base(wait)
+        public CmdFirstSetCheck()
         {
         }
 

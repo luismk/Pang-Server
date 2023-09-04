@@ -171,7 +171,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
             funcs = new func_arr();
             IFF = new IFFHandle();
             this.ReceiveFilterFactory = receiveFilterFactory;
-            this.m_ConnectionFilters = new List<IConnectionFilter>(); 
+            this.m_ConnectionFilters = new List<IConnectionFilter>();
         }
 
         /// <summary>
@@ -522,7 +522,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
             catch (Exception e)
             {
                 _smp.Message_Pool.push("[AppServer::Start][LogException]: One exception wa thrown in the method 'OnStartup()'.", e);
-            }           
+            }
             return true;
         }
 
@@ -632,16 +632,6 @@ namespace PangyaAPI.SuperSocket.SocketBase
         }
 
 
-        /// <summary>
-        /// Executes the command for the session.
-        /// </summary>
-        /// <param name="session">The session.</param>
-        /// <param name="requestInfo">The request info.</param>
-        internal void ExecuteCommand(IAppSession session, TRequestInfo requestInfo)
-        {
-            this.ExecuteRequest((TAppSession)session, requestInfo);
-        }
-
         public void CmdRegisterServer()
         {
             NormalManagerDB.add(0, new CmdRegisterServer(m_si), SQLDBResponse, this);
@@ -672,29 +662,45 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
         private void cmdUpdateListBlock_IP_MAC()
         {
-            snmdb.NormalManagerDB.add(0, new CmdListIpBan(), SQLDBResponse, this);
-            snmdb.NormalManagerDB.add(0, new CmdListMacBan(), SQLDBResponse, this);
+            // List de IP Address Ban
+            var cmd_lib = new CmdListIpBan();     // Waiter
+
+            NormalManagerDB.add(0, cmd_lib, null, null);
+
+            cmd_lib.ExecCmd();
+
+            if (cmd_lib.getException().getCodeError() != 0)
+                throw cmd_lib.getException();
+
+            v_ip_ban_list = cmd_lib.getListIPBan();
+
+            // List de Mac Address Ban
+            var cmd_lmb = new CmdListMacBan();    // Waiter
+
+            NormalManagerDB.add(0, cmd_lmb, null, null);
+
+            cmd_lmb.ExecCmd();
+
+            if (cmd_lmb.getException().getCodeError() != 0)
+                throw cmd_lmb.getException();
+
+            v_mac_ban_list = cmd_lmb.getList();
         }
 
-      
+
 
         /// <summary>
         /// Executes the command.
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="requestInfo">The request info.</param>
-        protected virtual void ExecuteRequest(TAppSession session, TRequestInfo requestInfo)
+        internal void ExecuteRequest(TAppSession session, TRequestInfo requestInfo)
         {
             if (m_RequestHandler != null)
             {
                 try
                 {
-                    var newRequest = (requestInfo as PangyaRequestInfo);
-                    //var packet = new Packet(newRequest.Message);
-                    //packet.unMake(session.m_key);
-                    //newRequest.Message = packet.Message;
-                    //chama novos pacotes/call new packets
-                    m_RequestHandler(session, newRequest as TRequestInfo);
+                    m_RequestHandler?.Invoke(session, requestInfo);
                 }
                 catch (Exception e)
                 {
@@ -766,7 +772,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
             //{
             //    socketSession.Close(reason: CloseReason.SocketError);
             //    return NullAppSession;
-            
+
             //}
             var appSession = CreateAppSession(socketSession);
             appSession.Initialize(this, socketSession);
@@ -948,7 +954,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
                     return el;
                 }
             }
-            return null;
+            return NullAppSession;
         }
         /// <summary>
         /// Gets the total session count.
@@ -966,7 +972,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 Stop();
         }
 
-        public abstract void onHeartBeat();
+        public abstract void OnHeartBeat();
 
         public bool haveBanList(string _ip_address, string _mac_address, bool _check_mac = true)
         {
@@ -978,56 +984,85 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 if (string.IsNullOrEmpty(_mac_address))
                     return true;    // Cliente não enviou um MAC Address válido, bloquea essa conexão que é hacker que mudou o ProjectG
 
-                foreach (var item in ListBlockMac)
+                foreach (var el in v_mac_ban_list)
                 {
-                    if (string.IsNullOrEmpty(item.Mac_Adress) == false && item.Mac_Adress == _mac_address)
+                    if (!string.IsNullOrEmpty(el) && string.Compare(el, _mac_address, StringComparison.OrdinalIgnoreCase) == 0)
                     {
-
+                        return true;
                     }
-                    return true;	// MAC Address foi bloqueado
                 }
             }
             // IP Address inválido, bloquea essa conexão que é Hacker ou Bug
-
             if (string.IsNullOrEmpty(_ip_address))
+            {
                 return true;
+            }
+            uint ip = 0;
+            if (IPAddress.TryParse(_ip_address, out IPAddress ipAddress))
+            {
+                byte[] ipBytes = ipAddress.GetAddressBytes();
+                ip = BitConverter.ToUInt32(ipBytes, 0);
+                ip = (uint)IPAddress.NetworkToHostOrder((int)ip);
+            }
+            foreach (IPBan el in v_ip_ban_list)
+            {
+                if (el.Type == IPBanType.IPBlockNormal)
+                {
+                    if ((ip & el.Mask) == (el.IP & el.Mask))
+                    {
+                        return true;
+                    }
+                }
+                else if (el.Type == IPBanType.IPBlockRange)
+                {
+                    if (el.IP <= ip && ip <= el.Mask)
+                    {
+                        return true;
+                    }
+                }
+            }
 
             return false;
-
         }
         private List<string> v_mac_ban_list;
-        private List<string> v_ip_ban_list;
+        private List<IPBan> v_ip_ban_list;
         public virtual void AppMonitor()
         {
-            while (IsRunning)
+            Thread thread = new Thread(() =>
             {
-                if (_smp.Message_Pool.checkUpdateDayLog())
-                    _smp.Message_Pool.push("[AppServer::monitor::UpdateLogFiles][Log] Atualizou os arquivos de Log por que trocou de dia.");
-                try
+                while (IsRunning)
                 {
-                    cmdUpdateServerList();  // Pega a Lista de servidores online
+                    if (_smp.Message_Pool.checkUpdateDayLog())
+                        _smp.Message_Pool.push("[AppServer::monitor::UpdateLogFiles][Log] Atualizou os arquivos de Log por que trocou de dia.");
+                    try
+                    {
+                        cmdUpdateServerList();  // Pega a Lista de servidores online
 
-                    cmdUpdateListBlock_IP_MAC();    // Pega a List de IP e MAC Address que estão bloqueadas
+                        cmdUpdateListBlock_IP_MAC();    // Pega a List de IP e MAC Address que estão bloqueadas
 
-                    onHeartBeat();
+                        OnHeartBeat();
+                    }
+                    catch { }
                 }
-                catch { }
-            }
-            Thread.Sleep(5000);
+            });
+            thread.Start();  // Inicia a thread de verificação
+            Thread.Sleep(2000);
         }
         public virtual void AppRegisterServer()
         {
-            while (IsRunning)
+            Thread thread = new Thread(() =>
             {
-                CmdRegisterServer();
-            }
-            Thread.Sleep(10000);
+                while (IsRunning)
+                {
+                    CmdRegisterServer();
+                }
+            });
+            thread.Start();  // Inicia a thread de verificação
+            Thread.Sleep(1000);
         }
 
         public abstract IAppSession GetSessionByUserName(string User);
         public abstract IAppSession GetSessionByNick(string Nick);
-
-
         #endregion
     }
 }

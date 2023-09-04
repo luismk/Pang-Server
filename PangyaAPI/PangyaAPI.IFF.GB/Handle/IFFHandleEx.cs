@@ -145,7 +145,7 @@ namespace PangyaAPI.IFF.Handle
         {
             FileName = filepath;
             Zip.LoadFile(FileName);
-            
+
             if (Zip.CheckFile()[0] == 80 && Zip.CheckFile()[1] == 75)
             {
                 Character.Load(Zip.Reader("Character.iff"));
@@ -258,58 +258,71 @@ namespace PangyaAPI.IFF.Handle
                 case IFFGROUP.ITEM_TYPE_CHARACTER:
                     {
                         item = Character.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 case IFFGROUP.ITEM_TYPE_HAIR_STYLE:
                     {
                         item = HairStyle.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 case IFFGROUP.ITEM_TYPE_PART:
                     {
                         item = Part.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 case IFFGROUP.ITEM_TYPE_CLUB:
                     {
                         item = ClubSet.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 case IFFGROUP.ITEM_TYPE_BALL:
                     {
                         item = Ball.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 case IFFGROUP.ITEM_TYPE_USE:
                     {
                         item = Item.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 case IFFGROUP.ITEM_TYPE_CADDIE:
                     {
                         item = Caddie.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 case IFFGROUP.ITEM_TYPE_CADDIE_ITEM:
                     {
                         item = CaddieItem.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 case IFFGROUP.ITEM_TYPE_SETITEM:
                     {
                         item = SetItem.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 case IFFGROUP.ITEM_TYPE_SKIN:
                     {
                         item = Skin.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 case IFFGROUP.ITEM_TYPE_MASCOT:
                     {
                         item = Mascot.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 case IFFGROUP.ITEM_TYPE_CARD:
                     {
                         item = Card.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 case IFFGROUP.ITEM_TYPE_AUX:
                     {
                         item = AuxPart.GetItemCommon(TypeID);
-                    } break;
+                    }
+                    break;
                 default:
                     {
-                       var result = (uint)Math.Round((TypeID & 0xFC000000) / Math.Pow(2.0, 26.0));
+                        var result = (uint)Math.Round((TypeID & 0xFC000000) / Math.Pow(2.0, 26.0));
 
                         Debug.WriteLine($"ItemGroup_Un -> {GetItemGroup(TypeID)}");
                     }
@@ -584,9 +597,9 @@ namespace PangyaAPI.IFF.Handle
                 {
                     case IFFGROUP.ITEM_TYPE_CLUB:
                     case IFFGROUP.ITEM_TYPE_PART:
-                        //  Part
+                    //  Part
                     case IFFGROUP.ITEM_TYPE_BALL:
-                        //  Ball
+                    //  Ball
                     case IFFGROUP.ITEM_TYPE_CADDIE:
                     case IFFGROUP.ITEM_TYPE_SETITEM:
                     case IFFGROUP.ITEM_TYPE_MASCOT:
@@ -725,6 +738,7 @@ namespace PangyaAPI.IFF.Handle
 
         public void Log()
         {
+            #if _RELEASE 
             Debug.WriteLine("[Part.iff] => Load Files: {0}", Part.Count);
             Debug.WriteLine("[Card.iff] => Load Files: {0}", Card.Count);
             Debug.WriteLine("[Ball.iff] => Load Files: {0}", Ball.Count);
@@ -760,7 +774,9 @@ namespace PangyaAPI.IFF.Handle
             Debug.WriteLine("[Match.iff] => Load Files: {0}", Match.Count);
             Debug.WriteLine("[SetEffectTable.iff] => Load Files: {0}", SetEffectTable.Count);
             Debug.WriteLine("[Enchant.iff] => Load Files: {0}", Enchant.Count);
-
+            
+             
+            #endif
         }
 
         public void UpdateIFF(string file)
@@ -870,7 +886,7 @@ namespace PangyaAPI.IFF.Handle
                         UpdateIFF(path + "Mascot.iff");
                     }
                 }
-               
+
                 else if (MemorialShopItemRare.Update)
                 {
                     if (File.Exists(path + "MemorialShopRareItem.iff"))
@@ -938,10 +954,10 @@ namespace PangyaAPI.IFF.Handle
 
         public string GetDesc(uint typeID)
         {
-            if (Desc.Where(c=> c.TypeID == typeID).Any())
+            if (Desc.Where(c => c.TypeID == typeID).Any())
             {
                 var item = Desc.Where(c => c.TypeID == typeID).First();
-              return  string.IsNullOrEmpty(item.Description) ?"No have" : item.Description;
+                return string.IsNullOrEmpty(item.Description) ? "No have" : item.Description;
             }
             return "Decription not found";
         }

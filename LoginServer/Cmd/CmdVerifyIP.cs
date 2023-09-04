@@ -20,13 +20,13 @@ namespace LoginServer.Cmd
 
         protected override string _getName { get; set; } = "CmdVerifyIP";
 
-        public CmdVerifyIP(int _uid, string _ip) : this(true)
+        public CmdVerifyIP(int _uid, string _ip)
         {
             m_uid = _uid;
             m_ip = _ip;
         }
 
-        public CmdVerifyIP(bool wait = false) : base(wait)
+        public CmdVerifyIP()
         {
         }
 

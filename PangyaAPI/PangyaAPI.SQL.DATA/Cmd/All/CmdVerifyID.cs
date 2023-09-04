@@ -15,11 +15,11 @@ namespace PangyaAPI.SQL.DATA.Cmd
         int m_uid = -1;
         string m_id = "";
 
-        public CmdVerifyID(string ID) : this(true)
+        public CmdVerifyID(string ID)
         {
             m_id = ID;
         }
-        public CmdVerifyID(bool wait = false) : base(wait)
+        public CmdVerifyID()
         {
         }
 
