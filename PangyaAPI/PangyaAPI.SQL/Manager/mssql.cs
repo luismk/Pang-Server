@@ -1,10 +1,11 @@
 ﻿using System;
-using Microsoft.VisualBasic.CompilerServices;
 using PangyaAPI.Utilities;
 using System.Data;
 using result_set = PangyaAPI.SQL.Result_Set;
 using response = PangyaAPI.SQL.Response;
 using System.Data.SqlClient;
+using System.Linq;
+using _smp = PangyaAPI.Utilities.Log;
 
 namespace PangyaAPI.SQL.Manager
 {
@@ -80,10 +81,9 @@ namespace PangyaAPI.SQL.Manager
 
                 m_connected = true;
             }
-            catch (Exception projectError)
+            catch (Exception ex)
             {
-                ProjectData.SetProjectError(projectError);
-                ProjectData.ClearProjectError();
+                _smp.Message_Pool.push("[mssql::Connect][Error] " + ex.Message + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
                 m_connected = false;
             }
             finally
@@ -147,11 +147,11 @@ namespace PangyaAPI.SQL.Manager
                     var ret = 0;
                     if (numResults > 0)
                     {
-                        result = new result_set((uint)result_set.STATE_TYPE.HAVE_DATA, numResults, numRows);
                         while (ret < numResults)
                         {
                             for (i = 0; i < numResults; i++)
                             {
+                                result = new result_set((uint)result_set.STATE_TYPE.HAVE_DATA, numResults, numRows);
                                 result.addLine();   // Adiciona linha
                                 result.setRow(_data.Rows[i]);
                                 res.addResultSet(result);
@@ -165,20 +165,18 @@ namespace PangyaAPI.SQL.Manager
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
+                _smp.Message_Pool.push("[mssql::ExecQuery][Error] " + ex.Message + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
                 return res;
             }
         }
-        public override response ExecProc(string _proc_name, string[] _params, type_SqlDbType[] tipo = null, string[] valor = null, ParameterDirection Direcao = ParameterDirection.Input)
+        public override response ExecProc(string _proc_name, string valor = null)
         {
             response res = new response();
-            result_set result = null;
             uint numResults = 0;
             int numRows = 0;
-            int i;
-            try
+             try
             {
-                HandleDiagnosticRecord(_proc_name, _params, tipo, valor, Direcao);
+                HandleDiagnosticRecord(_proc_name, valor);
                 if (m_ctx.hStmt != null && m_ctx.hStmt.Tables[m_db_name] != null)
                 {
                     var _data = m_ctx.hStmt.Tables[m_db_name];
@@ -188,27 +186,26 @@ namespace PangyaAPI.SQL.Manager
                     }
                     if (_data.Rows.Count > 1)
                     {
-                        numResults = (uint)_data.Rows.Count - 1;
+                        numResults = (uint)_data.Rows.Count  - 1;
                     }
                     numRows = _data.Columns.Count;
                     res.setRowsAffected(numRows);
-                    var ret = 0;
                     if (numResults > 0)
                     {
-                        result = new result_set((uint)result_set.STATE_TYPE.HAVE_DATA, numResults, numRows);
-                        for (i = 0; i < numResults; i++)
+                        foreach (DataRow item in _data.Rows)
                         {
+                            result_set result = new result_set((uint)result_set.STATE_TYPE.HAVE_DATA, numResults, numRows);
                             result.addLine();   // Adiciona linha
-                            result.setRow(_data.Rows[i]);
+                            result.setRow(item);
                             res.addResultSet(result);
-                        }
+                        }    
                     }
                 }
                 return res;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
+                _smp.Message_Pool.push("[mssql::ExecProc][Error] " + ex.Message + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
                 return res;
             }
         }
@@ -239,17 +236,25 @@ namespace PangyaAPI.SQL.Manager
         protected ctx_db m_ctx = new ctx_db();
         protected void HandleDiagnosticRecord(string query)
         {
-            if (m_ctx.hDbc != null)
+            try
             {
-                m_ctx.hDbc = new SqlConnection(connect_str);
-                m_ctx.hDbc.Open();
-                var da = new SqlDataAdapter(query, m_ctx.hDbc);
-                da.Fill(m_ctx.hStmt, m_db_name);
-                m_ctx.hDbc.Close();
+
+                if (m_ctx.hDbc != null)
+                {
+                    m_ctx.hDbc = new SqlConnection(connect_str);
+                    m_ctx.hDbc.Open();
+                    var da = new SqlDataAdapter(query, m_ctx.hDbc);
+                    da.Fill(m_ctx.hStmt, m_db_name);
+                    m_ctx.hDbc.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                _smp.Message_Pool.push("[mssql::HandleDiagnosticQuery][Error] " + ex.Message + "]", _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
             }
         }
 
-        protected void HandleDiagnosticRecord(string _proc_name, string[] parameter = null, type_SqlDbType[] tipo = null, string[] valor = null, ParameterDirection Direcao = ParameterDirection.Input)
+        protected void HandleDiagnosticRecord(string _proc_name, string valores = null)
         {
             try
             {
@@ -257,35 +262,35 @@ namespace PangyaAPI.SQL.Manager
                 {
                     m_ctx.hDbc = new SqlConnection(connect_str);
                     m_ctx.hDbc.Open();
-                    m_ctx.hEnv = new SqlCommand(m_db_name + "." + _proc_name, m_ctx.hDbc)
+
+                    // Montar a string de comando para execução do procedimento
+                    var commandText = $"EXEC {m_db_name}.{_proc_name} ";
+
+                    if (!string.IsNullOrEmpty(valores))
                     {
-                        CommandType = CommandType.StoredProcedure
-                    };
-                    if (parameter != null && parameter.Length > 0)
-                    {
-                        for (int i = 0; i < parameter.Length; i++)
-                        {
-                            m_ctx.hEnv.Parameters.Add(new SqlParameter
-                            {
-                                ParameterName = parameter[i],
-                                Value = valor[i],
-                                SqlDbType = (SqlDbType)tipo[i],
-                                Direction = Direcao
-                            });
-                        }
+                        // Divide os valores com base na vírgula
+                        var valorArray = valores.Split(',')
+                                                .Select(v => v.Trim()) // Remove espaços em branco
+                                                .Select(v => $"'{v}'") // Adiciona aspas simples
+                                                .ToArray();
+
+                        // Junta os valores formatados de volta em uma string
+                        commandText += string.Join(", ", valorArray);
                     }
+
+                    m_ctx.hEnv = new SqlCommand(commandText, m_ctx.hDbc);
                     var da = new SqlDataAdapter(m_ctx.hEnv);
                     da.Fill(m_ctx.hStmt, m_db_name);
                 }
-
             }
             catch (Exception ex)
             {
-                throw;
+                throw ex;
             }
+
             finally
             {
-                m_ctx.hDbc.Dispose();
+                m_ctx.hDbc?.Dispose();
             }
         }
     }

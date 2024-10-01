@@ -12,8 +12,6 @@ namespace PangyaAPI.SQL.Engine
         protected internal SQLDataRow(DataRowBuilder builder) : base(builder)
         {
             //CheckNull();
-        }
-
-
+        }               
     }
 }

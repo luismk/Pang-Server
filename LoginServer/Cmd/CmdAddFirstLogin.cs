@@ -6,7 +6,7 @@ namespace LoginServer.Cmd
     {
         int m_uid = -1;
         byte m_flag;
-        protected override string _getName { get; set; } = "CmdAddFirstLogin";
+        protected override string _getName { get; } = "CmdAddFirstLogin";
 
         public CmdAddFirstLogin(int _uid, byte _flag)
         {

@@ -18,7 +18,7 @@ namespace LoginServer.Cmd
         string m_ip;
         private bool m_last_verify;
 
-        protected override string _getName { get; set; } = "CmdVerifyIP";
+        protected override string _getName { get; } = "CmdVerifyIP";
 
         public CmdVerifyIP(int _uid, string _ip)
         {
@@ -45,7 +45,7 @@ namespace LoginServer.Cmd
         protected override Response prepareConsulta()
         {
             m_last_verify = false;
-            var r = procedure("pangya.ProcVerifyIP", new string[] { "@UID", "@IP" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.NVarChar }, new string[] { m_uid.ToString(), m_ip }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcVerifyIP", m_uid.ToString() +", " + m_ip);
             checkResponse(r, "nao conseguiu verificar o ip de accesso do player: " + (m_uid));
             return r;
         }

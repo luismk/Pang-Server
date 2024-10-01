@@ -15,7 +15,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
     public class CmdListIpBan: Pangya_DB
     {
         List<IPBan> v_list_ip_ban;
-        protected override string _getName { get; set; } = "CmdListIpBan";
+        protected override string _getName { get; } = "CmdListIpBan";
 
         public CmdListIpBan()
         {

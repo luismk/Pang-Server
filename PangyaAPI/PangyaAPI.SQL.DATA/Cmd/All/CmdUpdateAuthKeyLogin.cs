@@ -5,7 +5,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
     {
         int m_uid = -1;
         byte m_valid = 0;
-        protected override string _getName { get; set; } = "CmdUpdateAuthKeyLogin";
+        protected override string _getName { get; } = "CmdUpdateAuthKeyLogin";
 
         public CmdUpdateAuthKeyLogin(int _uid, byte _valid)
         {
@@ -28,7 +28,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
                 throw new Exception("[CmdUpdateAuthKeyLogin::prepareConsulta][Error] m_uid is invalid(zero).");
 
 
-            var r = _update("UPDATE pangya.authkey_login SET valid = " + m_valid +" WHERE UID = " +m_uid);
+            var r = _update("UPDATE pangya.authkey_login SET valid = " + m_valid.ToStrings() + " WHERE UID = " +m_uid);
             checkResponse(r, "nao conseguiu pegar o Auth Server Key do Server[UID=" + (m_uid) + "]");
             return r;
         }

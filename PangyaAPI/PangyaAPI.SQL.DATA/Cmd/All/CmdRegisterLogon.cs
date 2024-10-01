@@ -28,7 +28,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
         {
          
 
-            var r = procedure("pangya.ProcRegisterLogon", new string[] { "@IDUSER", "@OPTION" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.Int }, new string[] { m_uid.ToString(), m_option.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcRegisterLogon",  m_uid.ToString() + ", " + m_option.ToString());
 
             checkResponse(r, "nao conseguiu registrar o logon do player: " + (m_uid) + ", na option: " + (m_option));
             return r;

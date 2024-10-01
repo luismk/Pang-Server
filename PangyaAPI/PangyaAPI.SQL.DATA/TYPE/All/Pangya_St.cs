@@ -28,8 +28,8 @@ namespace PangyaAPI.SQL.DATA.TYPE
         }
         [field: MarshalAs(UnmanagedType.U4, SizeConst = 4)]
         public uint ulProperty { get; set; }
-        public _stBit stBit;
-        public struct _stBit
+        public _stBit stBit { get; set; }
+        public class _stBit
         {
             public uint mantle; // = 0; // Só GM ou pessoas autorizadas pode ver esse server
             public uint only_rookie; // = 0; // Só Rookie(Iniciante) Pode entrar

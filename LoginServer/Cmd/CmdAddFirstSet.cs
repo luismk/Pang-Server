@@ -14,7 +14,7 @@ namespace LoginServer.Cmd
     public class CmdAddFirstSet : Pangya_DB
     {
         int m_uid = -1;
-        protected override string _getName { get; set; } = "CmdAddFirstSet";
+        protected override string _getName { get; } = "CmdAddFirstSet";
 
         public CmdAddFirstSet(int _uid)
         {
@@ -32,7 +32,7 @@ namespace LoginServer.Cmd
 
         protected override Response prepareConsulta()
         {
-            var r = procedure("pangya.ProcFirstSet", new string[] {"@IDUSER"}, new type_SqlDbType[] {type_SqlDbType.Int}, new string[] {m_uid.ToString()}, ParameterDirection.Input);
+            var r = procedure("pangya.ProcFirstSet", m_uid.ToString());
             checkResponse(r, "nao conseguiu add first set do player: " + m_uid);
             return r;
         }

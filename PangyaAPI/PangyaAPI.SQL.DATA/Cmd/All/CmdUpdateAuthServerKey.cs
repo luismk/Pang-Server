@@ -15,7 +15,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
     {
         AuthServerKey m_ask;
 
-        protected override string _getName { get; set; } = "CmdUpdateAuthServerKey";
+        protected override string _getName { get; } = "CmdUpdateAuthServerKey";
 
         public CmdUpdateAuthServerKey(AuthServerKey _ask)
         {
@@ -41,7 +41,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
                 key = _db.makeText(m_ask.key);
 
 
-            var r = procedure("pangya.ProcUpdateAuthServerKey", new string[] { "@SERVER_UID", "@KEY", "@VALID" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.VarChar, type_SqlDbType.TinyInt }, new string[] { m_ask.server_uid.ToString(), m_ask.key, m_ask.valid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcUpdateAuthServerKey", m_ask.server_uid.ToString() + ", " + m_ask.key + ", " + m_ask.valid.ToString());
 
             checkResponse(r, "nao conseguiu atualizar Auth Server Key[SERVER_UID=" + (m_ask.server_uid)
                         + ", KEY=" + key + ", VALID=" + m_ask.valid + "]");

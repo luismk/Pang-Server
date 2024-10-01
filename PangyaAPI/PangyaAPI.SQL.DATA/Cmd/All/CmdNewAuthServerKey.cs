@@ -15,7 +15,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
     {
         readonly int m_server_uid = -1;
         string m_key;
-        protected override string _getName { get; set; } = "CmdNewAuthServerKey";
+        protected override string _getName { get; } = "CmdNewAuthServerKey";
 
         public CmdNewAuthServerKey(int _uid)
         {
@@ -46,7 +46,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
                 throw new Exception("[CmdNewAuthServerKey::prepareConsulta][Error] m_server_uid is invalid(zero).");
 
 
-            var r = procedure("pangya.ProcGetNewAuthServerKey", new string[] { "@UID" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_server_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcGetNewAuthServerKey",m_server_uid.ToString());
 
             checkResponse(r, "Server[UID=" + (m_server_uid) + "] nao conseguiu gerar uma nova key para o Auth Server");
             return r;

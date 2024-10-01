@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace PangyaAPI.SQL
 {
-    public class Response
+    public class Response : System.IDisposable
     {
         public Response()
         {
@@ -50,6 +50,12 @@ namespace PangyaAPI.SQL
 
             return m_result_set[(int)_index];
         }
+
+        public List<Result_Set> getResultSet()
+        {                                   
+            return m_result_set;
+        }
+
 
         public void setRowsAffected(long _rows_affected)
         {

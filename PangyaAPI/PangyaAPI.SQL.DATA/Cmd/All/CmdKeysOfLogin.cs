@@ -10,7 +10,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
     {
          int m_uid = -1;
         KeysOfLogin m_keys_of_login;
-        protected override string _getName { get; set; } = "CmdKeysOfLogin";
+        protected override string _getName { get; } = "CmdKeysOfLogin";
 
         public CmdKeysOfLogin(int _uid)
         {
@@ -45,7 +45,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
 
         protected override Response prepareConsulta()
         {
-            var r = procedure("pangya.ProcGetMacrosUser", new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcGetMacrosUser",  m_uid.ToString());
             checkResponse(r, "nao conseguiu pegar o macro do player: " + (m_uid));
             return r;
         }

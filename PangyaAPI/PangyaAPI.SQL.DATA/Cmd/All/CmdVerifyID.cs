@@ -48,7 +48,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
 
             m_uid = 0;
 
-            var r = procedure("pangya.ProcVerifyID", new string[] { "@ID" }, new type_SqlDbType[] { type_SqlDbType.VarChar }, new string[] { m_id }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcVerifyID", m_id);
 
             checkResponse(r, "nao conseguiu verificar se existe o ID: " + m_id);
             return r;

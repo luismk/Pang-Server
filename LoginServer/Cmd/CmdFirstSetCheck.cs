@@ -15,7 +15,7 @@ namespace LoginServer.Cmd
     {
         int m_uid = -1;
         bool m_check;
-        protected override string _getName { get; set; } = "CmdFirstSetCheck";
+        protected override string _getName { get; } = "CmdFirstSetCheck";
 
         public CmdFirstSetCheck(int _uid, bool _check = false)
         {

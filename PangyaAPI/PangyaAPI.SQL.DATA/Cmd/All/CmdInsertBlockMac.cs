@@ -14,7 +14,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
     public class CmdInsertBlockMac: Pangya_DB
     {
         string m_mac_address;
-        protected override string _getName { get; set; } = "CmdInsertBlockMac";
+        protected override string _getName { get; } = "CmdInsertBlockMac";
 
         public CmdInsertBlockMac(string _mac_address)
         {
@@ -36,8 +36,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
             if (string.IsNullOrEmpty(m_mac_address))
                 throw new Exception("[CmdInsertBlockMAC::prepareConsulta][Error] m_mac_address is empty.");
 
-            var r = procedure("pangya.ProcInsertBlockMAC", new string[] { "@MAC" }, new type_SqlDbType[] { type_SqlDbType.NVarChar },
-                new string[] { m_mac_address }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcInsertBlockMAC",  m_mac_address);
 
             checkResponse(r, "nao conseguiu inserir o MAC ADDRESS[" + m_mac_address + "] para a lista de MAC bloqueado");
             return r;

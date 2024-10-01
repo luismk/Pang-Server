@@ -4,7 +4,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
 {
     public class PangyaRequestInfo : IRequestInfo
     {
-        public short PacketID => (short)_packet?.m_Tipo;
+        public short PacketID => (short)_packet ?.Id;
         /// <summary>
         /// Get Read and Write Packet 
         /// </summary>
@@ -12,18 +12,14 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
         public PangyaRequestInfo()
         {
-            _packet = new Packet();
-        }
+         }
 
 
         public PangyaRequestInfo Initialize(byte key, byte[] buff, int size)
         {
             try
             {
-                _packet = new Packet();
-                _packet.AddMaked(buff, size);//adiciona o pacote recebido
-                _packet.UnMake(key);//decripta o pacote
-                _packet.m_Tipo = _packet.ReadUInt16();//ler o pacote
+                _packet = new Packet(buff, key);                  
                 return this;
             }
             catch

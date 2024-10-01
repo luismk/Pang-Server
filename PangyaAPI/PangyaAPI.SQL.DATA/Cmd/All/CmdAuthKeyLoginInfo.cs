@@ -10,7 +10,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
     {
         int m_uid = -1;
         AuthKeyLoginInfo m_akli;
-        protected override string _getName { get; set; } = "CmdAuthKeyLoginInfo";
+        protected override string _getName { get; } = "CmdAuthKeyLoginInfo";
 
         public CmdAuthKeyLoginInfo(int _uid)
         {
@@ -43,7 +43,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
                 throw new Exception("[CmdAuthKeyLoginInfo::prepareConsulta][Error] m_uid is invalid(zero).");
 
 
-            var r = procedure("pangya.ProcGetAuthKeyLogin", new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcGetAuthKeyLogin", m_uid.ToString());
 
             checkResponse(r, "nao conseguiu pegar o Auth Server Key do Server[UID=" + (m_uid) + "]");
             return r;

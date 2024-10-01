@@ -28,7 +28,6 @@ namespace LoginServer
 
         public byte m_state { get; set; }
         public byte m_place { get; set; }
-        public int m_server_uid { get; set; }       // Server UID em que eles está conectado
-    }
-
+        public int m_server_uid { get; set; }       // Server UID em que player está conectado
+    }         
 }

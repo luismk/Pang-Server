@@ -10,7 +10,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
         int m_uid = -1;
         int m_server_uid = -1;
         AuthKeyGameInfo m_akgi;
-        protected override string _getName { get; set; } = "CmdAuthKeyGameInfo";
+        protected override string _getName { get; } = "CmdAuthKeyGameInfo";
 
         public CmdAuthKeyGameInfo(int _uid, int _server_uid)
         {
@@ -52,7 +52,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
             if (m_uid == 0 || m_uid == -1)
                 throw new Exception("[CmdAuthKeyGameInfo::prepareConsulta][Error] m_uid is invalid(zero).");
 
-            var r = procedure("pangya.ProcGetAuthKeyGame", new string[] { "@UID", "@SERVERUID" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString(), m_server_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcGetAuthKeyGame", m_uid.ToString() + "," + m_server_uid.ToString());
 
             checkResponse(r, "nao conseguiu pegar o auth key game do player: " + (m_uid) + ", do server uid: " + (m_server_uid));
             return r;

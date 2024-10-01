@@ -15,7 +15,7 @@ namespace LoginServer.Cmd
     {
         int m_uid = -1;
         bool m_check;
-        protected override string _getName { get; set; } = "CmdFirstLoginCheck";
+        protected override string _getName { get; } = "CmdFirstLoginCheck";
 
         public CmdFirstLoginCheck(int _uid)
         {
@@ -27,7 +27,7 @@ namespace LoginServer.Cmd
             checkColumnNumber(1);
             try
             {
-                m_check = _result.GetBoolean(0);
+                m_check = Convert.ToBoolean(_result.data[0]);
             }
             catch (Exception)
             {

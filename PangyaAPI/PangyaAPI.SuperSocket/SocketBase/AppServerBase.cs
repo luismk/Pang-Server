@@ -68,6 +68,8 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
         public ServerInfoEx getInfo() => m_si;
 
+        public List<TAppSession> Sessions { get; set; }
+
         /// <summary>
         /// Gets or sets the receive filter factory.
         /// </summary>
@@ -768,14 +770,15 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// <returns></returns>
         IAppSession IAppServer.CreateAppSession(ISocketSession socketSession)
         {
-            //if (!ExecuteConnectionFilters(socketSession.RemoteEndPoint))
-            //{
-            //    socketSession.Close(reason: CloseReason.SocketError);
-            //    return NullAppSession;
-
-            //}
             var appSession = CreateAppSession(socketSession);
+
             appSession.Initialize(this, socketSession);
+
+            if (HasLoggedWithOuterSocket(appSession) != null)
+            {
+                socketSession.Close(reason: CloseReason.SocketError);
+                return NullAppSession;
+            }
             NextConnectionID++;
             return appSession;
         }
@@ -816,9 +819,13 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// <returns></returns>
         protected virtual bool RegisterSession(uint sessionID, TAppSession appSession)
         {
-            return true;
+            if (!Sessions.Any())
+            {
+                Sessions.Add(appSession);
+                return true;
+            }
+            return false;
         }
-
 
         private SessionHandler<TAppSession> m_NewSessionConnected;
 
@@ -943,8 +950,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
         /// </summary>
         public virtual IEnumerable<TAppSession> GetAllSessions()
         {
-            throw new NotSupportedException();
-        }
+            return Sessions.ToArray();        }
         public TAppSession HasLoggedWithOuterSocket(TAppSession _session)
         {
             foreach (var el in GetAllSessions())
@@ -1026,6 +1032,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
         }
         private List<string> v_mac_ban_list;
         private List<IPBan> v_ip_ban_list;
+        
         public virtual void AppMonitor()
         {
             Thread thread = new Thread(() =>
@@ -1048,6 +1055,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
             thread.Start();  // Inicia a thread de verificação
             Thread.Sleep(2000);
         }
+
         public virtual void AppRegisterServer()
         {
             Thread thread = new Thread(() =>

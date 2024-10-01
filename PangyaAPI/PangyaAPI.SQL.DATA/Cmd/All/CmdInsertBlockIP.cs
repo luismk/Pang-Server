@@ -14,7 +14,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
     {
         string m_ip;
         string m_mask;
-        protected override string _getName { get; set; } = "CmdInsertBlockIp";
+        protected override string _getName { get; } = "CmdInsertBlockIp";
 
         public CmdInsertBlockIp(string _ip_address, string mask)
         {
@@ -38,8 +38,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
                 throw new Exception("[CmdInsertBlockIP::prepareConsulta][Error] m_ip[" + m_ip + "] or m_mask["
             + m_mask + "] is invalid");
 
-            var r = procedure("pangya.ProcInsertBlocIP", new string[] { "@IP" }, new type_SqlDbType[] { type_SqlDbType.NVarChar },
-                new string[] { m_ip }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcInsertBlocIP",  m_ip);
 
             checkResponse(r, "nao conseguiu inserir um Block IP[IP=" + m_ip + ", MASK=" + m_mask + "]");
             return r;

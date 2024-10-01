@@ -48,7 +48,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
             m_check = false;
             m_uid = 0;
 
-            var r = procedure("pangya.ProcVerifyNickname", new string[] { "@NICKNAME" }, new type_SqlDbType[] { type_SqlDbType.VarChar }, new string[] { m_nick }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcVerifyNickname", m_nick);
 
             checkResponse(r, "nao conseguiu verificar se existe o nick: " + m_nick);
             return r;

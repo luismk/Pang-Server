@@ -71,7 +71,7 @@ namespace PangyaAPI.SQL
 		public abstract void disconnect();
 
 		public abstract response ExecQuery(string _query);
-		public abstract response ExecProc(string _proc_name, string[] _params, type_SqlDbType[] tipo = null, string[] valor = null, ParameterDirection Direcao = ParameterDirection.Input);
+		public abstract response ExecProc(string _proc_name, string valor = null);
 		public abstract string makeText(string _value);
 
 		public abstract string makeEscapeKeyword(string _value);

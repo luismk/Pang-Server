@@ -14,7 +14,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
     {
         string m_auth_key_login;
         int m_uid;
-        protected override string _getName { get; set; } = "CmdAuthKeyLogin";
+        protected override string _getName { get; } = "CmdAuthKeyLogin";
 
         public CmdAuthKeyLogin(int _uid)
         {
@@ -48,7 +48,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
         protected override Response prepareConsulta()
         {
             m_auth_key_login = "";
-            var r = procedure("pangya.ProcGeraAuthKeyLogin", new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcGeraAuthKeyLogin", m_uid.ToString());
 
             checkResponse(r, "nao conseguiu pegar a auth key do login server do player: " + (m_uid).ToString());
             return r;

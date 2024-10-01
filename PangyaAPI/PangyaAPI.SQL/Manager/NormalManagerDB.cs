@@ -13,7 +13,7 @@ namespace PangyaAPI.SQL.Manager
 			Action<int, Pangya_DB, object> _callback_response,
 			object _arg)
         {
-			normalManager.add(_id, _pangya_db, _callback_response, _arg);
+            normalManager.add(_id, ref _pangya_db, _callback_response, _arg);
         }
 		public static void create(uint _db_instance_num = 26)
 		{
@@ -97,7 +97,7 @@ namespace PangyaAPI.SQL.Manager
             return 0;
 		}
 		public int add(int _id,
-			Pangya_DB _pangya_db,
+			ref Pangya_DB _pangya_db,
 		Action<int, Pangya_DB, object> _callback_response,
 			object _arg)
 		{

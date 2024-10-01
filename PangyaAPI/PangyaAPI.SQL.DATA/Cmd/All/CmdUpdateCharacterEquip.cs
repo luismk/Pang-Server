@@ -15,7 +15,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
     {
         int m_uid;
         int m_character_id;
-        protected override string _getName { get; set; } = "CmdUpdateCharacterEquip";
+        protected override string _getName { get; } = "CmdUpdateCharacterEquip";
         public CmdUpdateCharacterEquip(int _uid, int character_id)
         {
             m_uid = _uid;
@@ -31,20 +31,9 @@ namespace PangyaAPI.SQL.DATA.Cmd
         protected override Response prepareConsulta()
         {
 
-            var r = procedure("pangya.USP_FLUSH_CHARACTER",
-                new string[]
-                {
-                    "@IDUSER",
-                    "@IDCHARACTER",
-                }, new type_SqlDbType[]
-                {
-                    type_SqlDbType.Int,
-                    type_SqlDbType.Int
-                }, new string[]
-            {
-                m_uid.ToString(),
-                m_character_id.ToString()
-            }, ParameterDirection.Input);
+            var r = procedure("pangya.USP_FLUSH_CHARACTER", 
+                m_uid.ToString() + ", " +
+                m_character_id.ToString() );
             checkResponse(r, "nao conseguiu atualizar o character[ID=" + (m_character_id) + "] equipado do player: " + (m_uid));
             return r;
         }

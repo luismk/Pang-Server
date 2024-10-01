@@ -1,12 +1,10 @@
-﻿using PangyaAPI.Cryptor.HandlePacket;
-using PangyaAPI.SuperSocket.Cryptor;
+﻿using PangyaAPI.SuperSocket.Cryptor;
 using PangyaAPI.SuperSocket.Ext;
-using PangyaAPI.SuperSocket.Interface;
 using PangyaAPI.Utilities;
 using PangyaAPI.Utilities.BinaryModels;
-using PangyaAPI.Utilities.Log;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -17,7 +15,8 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
     public class OffsetIndex
     {
-        public byte[] Buffer;
+        public PangyaBinaryReader Read;
+        public PangyaBinaryWriter Writer;
         public int IndexR;
         public int IndexW;
         public int Size;
@@ -25,7 +24,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
         public void Clear()
         {
-            Buffer = new byte[1024];
+            Writer = new PangyaBinaryWriter();
             IndexR = 0;
             IndexW = 0;
             Size = 0;
@@ -60,474 +59,250 @@ namespace PangyaAPI.SuperSocket.SocketBase
     {
         public byte Seq;
     }
-    public class ConversionByte
-    {
-        private const byte CB_BASE_256 = 10;
-        private const byte CB_BASE_255 = 20;
-        private const byte CB_SEQ_NORMAL = 1;
-        private const byte CB_SEQ_INVERTIDA = 2;
-        private const byte CB_PARAM_DEFAULT = 0;
 
-        private U unionConvertido;
-        private byte m_flag;
-
-        public ConversionByte(uint dwConvertido, byte flag = CB_PARAM_DEFAULT)
-        {
-            unionConvertido.dwConvertido = dwConvertido;
-            m_flag = flag;
-
-            if (m_flag != CB_PARAM_DEFAULT)
-                Invert();
-        }
-
-        public ConversionByte(byte[] ucpConvertido, byte flag = CB_PARAM_DEFAULT)
-        {
-            unionConvertido.dwConvertido = ucpConvertido != null && ucpConvertido.Length >= 4 ? BitConverter.ToUInt32(ucpConvertido, 0) : 0;
-            m_flag = flag;
-
-            if (m_flag != CB_PARAM_DEFAULT)
-                Invert();
-        }
-
-        private void Invert()
-        {
-            if ((m_flag & CB_BASE_255) != 0)
-            {
-                unionConvertido.dwConvertido = GetNumberIS();
-                unionConvertido.dwConvertido = GetNumberBase256();
-            }
-            else
-            {
-                unionConvertido.dwConvertido = GetNumberBase255();
-                unionConvertido.dwConvertido = GetNumberIS();
-            }
-        }
-
-        public uint GetNumberNS() => unionConvertido.dwConvertido;
-
-        public uint GetNumberIS()
-        {
-            uint ulNumber = 0;
-
-            ulNumber = unionConvertido.stConvertido.d;
-            ulNumber |= (uint)(unionConvertido.stConvertido.c << 8);
-            ulNumber |= (uint)(unionConvertido.stConvertido.b << 16);
-            ulNumber |= (uint)(unionConvertido.stConvertido.a << 24);
-
-            return ulNumber;
-        }
-
-        private uint ulNumber_temp;
-
-        public byte[] GetLPUCNS()
-        {
-            ulNumber_temp = GetNumberNS();
-
-            return BitConverter.GetBytes(ulNumber_temp);
-        }
-
-        public byte[] GetLPUCIS()
-        {
-            ulNumber_temp = GetNumberIS();
-
-            return BitConverter.GetBytes(ulNumber_temp);
-        }
-
-        public uint GetNumberBase256() => GetNumberNS() * 255 / 256 + 1;
-
-        public uint GetNumberBase255() => ((unionConvertido.dwConvertido / 255) << 8) | (unionConvertido.dwConvertido % 255);
-
-        public uint GetISNumberBase256() => (uint)(unionConvertido.dwConvertido * 255L / 256 + 1);
-
-        public uint GetISNumberBase255() => ((GetNumberIS() / 255) << 8) | (GetNumberIS() % 255);
-
-        public int PutNumberBuffer(ref byte[] buffer)
-        {
-            if (buffer == null || buffer.Length < sizeof(uint))
-                return -1;
-
-            //errado aqui, alguma coisa modificou para zerar tudo
-
-            Buffer.BlockCopy(buffer, 4+1, BitConverter.GetBytes(unionConvertido.dwConvertido), 0, sizeof(uint));
-
-            return sizeof(uint);
-        }
-
-        private struct U
-        {
-            public uint dwConvertido;
-
-            public struct Convertido
-            {
-                public byte a;
-                public byte b;
-                public byte c;
-                public byte d;
-            }
-
-            public Convertido stConvertido;
-        }
-    }
     public class AppPacketBase : IDisposable
     {
-        private OffsetIndex mPlain = new OffsetIndex();
-        private OffsetIndex mMaked = new OffsetIndex();
-        public ushort m_Tipo;
-        private readonly int CHUNCK_ALLOC = 1024;
-        private bool disposedValue;
 
+        #region Private Fields
+        private readonly MemoryStream _stream;
+        /// <summary>
+        /// Leitor do packet
+        /// </summary>
+        private PangyaBinaryReader Reader;
+
+        private PangyaBinaryWriter Reply = new PangyaBinaryWriter();
+
+        /// <summary>
+        /// Mensagem do Packet
+        /// </summary>
+        public byte[] Message { get; set; }
+
+        private byte[] MessageCrypted { get; set; }
+        #endregion
+
+        #region Public Fields
+        /// <summary>
+        /// Id do Packet
+        /// </summary>
+        public short Id { get; set; }
+        #endregion
+
+        #region Constructor
         public AppPacketBase()
-        {
-            mPlain.Buffer = new byte[0];
-            mMaked.Buffer = new byte[0];
-            m_Tipo = ushort.MaxValue;
+        {                           
         }
         public AppPacketBase(ushort ID)
         {
-            m_Tipo = ID;
-            mPlain.Clear();
-            mMaked.Clear();
-
-            AddPlain(BitConverter.GetBytes(m_Tipo), sizeof(ushort));
+            Reply.WriteUInt16(ID);
         }
 
-        /// <summary>
-        /// Decripta o pacote cliente
-        /// </summary>
-        public void UnMake(byte _Key)
+        public AppPacketBase(byte[] message, byte key)
         {
-            using (Crypt _crypt = new Crypt())
-            {
-                PacketHeadClient phc = new PacketHeadClient();
+            Id = BitConverter.ToInt16(new byte[] { message[5], message[6] }, 0);
 
-                int index = 0;
+            MessageCrypted = new byte[message.Length];
+            Buffer.BlockCopy(message, 0, MessageCrypted, 0, message.Length); //Copia mensagem recebida criptografada
 
-                phc = mMaked.Buffer.ByteArrayToStructure<PacketHeadClient>(index);
-                index += Marshal.SizeOf(phc);
+            Message = PangyaAPI.Cryptor.HandlePacket.Pang.ClientDecrypt(message, key);
 
-                if (phc.Size > mMaked.IndexW)
-                    throw new Exception("Erro: Unknown Packet. AppPacketBase::UnMake()");
+            _stream = new MemoryStream(Message);
 
-                _crypt.InitKey(_Key, phc.LowKey);
-
-                byte[] decrypt = new byte[phc.Size];
-                try
-                {
-                    _crypt.Decrypt(mMaked.Buffer.Clone(index), phc.Size, decrypt);
-                }
-                catch (Exception e)
-                {
-                    if (decrypt != null)
-                        decrypt = null;
-
-                    throw;
-                }
-                // Reset Plain
-                mPlain.Reset();
-
-                AddPlain(decrypt.Clone(1), phc.Size - 1);
-            }
-        }
-        /// <summary>
-        /// não testado ainda
-        /// </summary>
-        /// <param name="_key"></param>
-        /// <exception cref="AppException"></exception>
-        public void Make(byte _key)
-        {
-          
-            /// ACRISIO REF ///
-            //if (GetBytes == null)
-            //{
-            //  throw new  AppException("Error buf is nullptr em packet::makeFull()", 15);
-            //}
-
-            //Crypt _crypt = null;
-            //PacketHead ph = new PacketHead();
-
-            //ConversionByte cb = new ConversionByte((uint)GetBytes.Length, 10);
-
-            //byte[] tmp = new byte[cb.GetNumberIS() + 5 + 5];
-            //uint compressOut = 0;
-
-            //Compressor _compress = new Compressor();
-            //try
-            //{
-            //   tmp = _compress.CompressData(GetBytes, (uint)GetBytes.Length, ref compressOut);
-            //}
-            //catch (Exception e)
-            //{
-            //    // Clean
-            //    tmp.CleanUp(_compress, _crypt);
-            //    throw;
-            //}
-
-            //// Make Packet Head
-            //ph.Size = (byte)(compressOut + 5); // key low and size raw decompressed
-
-            //Random rand = new Random(((int)DateTime.UtcNow.Ticks * 7) * ph.Size);
-            //ph.LowKey = (byte)(rand.Next() & 255);
-
-            //_crypt = new Crypt();
-
-            //tmp[0] = _crypt.InitKey(_key, ph.LowKey);
-
-            //cb.PutNumberBuffer(ref tmp);
-
-            //// Maked Reset
-            //Clear();
-            //// Convert PacketHead to byte array
-            //byte[] phBytes = ph.ConvertArray();
-            //Write(phBytes);//escreve, porem com tamanho, assim o pacote fica correto na escrita
-            //WriteZero(ph.Size);
-            //var m_marked = GetBytes;
-            //try
-            //{
-            //    _crypt.Encrypt(tmp, ph.Size - 8, m_marked );
-            //}
-            //catch (Exception e)
-            //{
-            //    // Clean
-            //    tmp.CleanUp(_compress, _crypt);
-            //    throw;
-            //}
-
-
-            //// Clean
-            //tmp.CleanUp(_compress, _crypt);
-            //m_marked.DebugDump();
-            //var decrypt = Pang.ServerDecrypt(m_marked, _key);
-            //decrypt.DebugDump();
+            _stream.Seek(2, SeekOrigin.Current); //Seek Inicial
+            Reader = new PangyaBinaryReader(_stream);
         }
 
-        /// <summary>
-        /// Create Packet Hello!
-        /// </summary>
-        /// <exception cref="Exception"></exception>
-        public void MakeRaw()
-        {
-            if (mPlain == null || mPlain.Buffer == null)
-            {
-                throw new Exception("Erro, Message é nulo em AppPacketBase::MakeRaw()");
-            }
 
-            PacketHead ph = new PacketHead
-            {
-                LowKey = 0, // low part of key random - 0 nesse pacote porque ele é o primeiro que passa a chave
-                Size = (ushort)(mPlain.IndexW + 1)
-            };
-            byte key = 0;
-            switch (m_Tipo)
-            {
-                case 0x0B00:// Pacote Raw Login
-                    mPlain.Buffer[1] = 0;
-                    break;
-                case 0x2E:      // Pacote Raw MSN
-                case 0x3F:      // Pacote Raw Game
-                case 0x1388:	// Pacote Raw Rank
-                    break;
-                default:
-                    break;
-            }
-            mMaked.Reset();
-            AddMaked(ph);
-            AddMaked(key.ConvertArray(), 1);// byte com valor 0 para dizer que é um pacote raw
-            AddMaked(mPlain.Buffer, mPlain.IndexW);
+        #region Methods Get
+        public uint GetSize
+        {
+            get => Reader.Size;
         }
-       
-        public void AddPlain(byte[] @buf, int size)
+        public uint GetPos
         {
-            if (@buf == null)
-                throw new ArgumentNullException(nameof(@buf));
-
-            Alloc(ref mPlain, size);
-            Add(ref mPlain, @buf, size);
+            get => Reader.GetPosition();
         }
 
-        public void ReadPlain(byte[] @buf, int size)
+        public double ReadDouble()
         {
-            if (buf == null)
-                throw new ArgumentNullException(nameof(@buf));
-
-            if (mPlain.IndexW < (size + mPlain.IndexR))
-                throw new Exception("Error not enough for read in Packet.ReadPlain()");
-
-            Buffer.BlockCopy(mPlain.Buffer, mPlain.IndexR, @buf, 0, size);
-            mPlain.IndexR += size;
-        }
-        public object ReadBuffer(object @value)
-        {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-
-
-            int size = Marshal.SizeOf(value);
-            byte[] buf = new byte[size];
-
-            ReadBuffer(@buf, size);
-
-            if (buf.Length != size)
-            {
-                throw new Exception(
-                    $"The {nameof(value)} length ({buf.Length}) mismatches the length of the passed structure ({size})");
-            }
-
-            IntPtr ptr = Marshal.AllocHGlobal(size);
-
-            Marshal.Copy(buf, 0, ptr, size);
-
-            value = Marshal.PtrToStructure(ptr, value.GetType());
-            Marshal.FreeHGlobal(ptr);
-            return value;
-        }
-        public void ReadBuffer(object @value, int size =0)
-        {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-            if (size <=0)
-            {
-                size = Marshal.SizeOf(value);
-            }
-            byte[] buf = new byte[size];
-
-            ReadBuffer(@buf, size);
-
-            if (buf.Length != size)
-            {
-                throw new Exception(
-                    $"The {nameof(value)} length ({buf.Length}) mismatches the length of the passed structure ({size})");
-            }
-
-            IntPtr ptr = Marshal.AllocHGlobal(size);
-
-            Marshal.Copy(buf, 0, ptr, size);
-           @value = Marshal.PtrToStructure(ptr, @value.GetType());
-            Marshal.FreeHGlobal(ptr);            
-        }
-
-        public void AddMaked(byte[] buf, int size)
-        {
-            if (buf == null)
-                throw new ArgumentNullException(nameof(buf));
-
-            Alloc(ref mMaked, size);
-            Add(ref mMaked, buf, size);
-        }
-        public void AddMaked(object value)
-        {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-
-
-            int size = Marshal.SizeOf(value);
-            byte[] buf = new byte[size];
-
-            IntPtr ptr = Marshal.AllocHGlobal(size);
-            Marshal.StructureToPtr(value, ptr, true);
-            Marshal.Copy(ptr, buf, 0, size);
-            Marshal.FreeHGlobal(ptr);
-
-            if (buf == null)
-                throw new ArgumentNullException(nameof(buf));
-
-            Alloc(ref mMaked, size);
-            Add(ref mMaked, buf, size);
-        }
-
-        public void ReadMaked(byte[] @buf, int size)
-        {
-            if (@buf == null)
-                throw new ArgumentNullException(nameof(@buf));
-
-            if (mMaked.IndexW < (size + mMaked.IndexR))
-                throw new Exception("Error not enough for read in Packet.ReadMaked()");
-
-            Buffer.BlockCopy(mMaked.Buffer, mMaked.IndexR, @buf, 0, size);
-            mMaked.IndexR += size;
-        }
-        private void Destroy()
-        {
-            if (mPlain.Buffer != null)
-                mPlain.Buffer = null;
-
-            if (mMaked.Buffer != null)
-                mMaked.Buffer = null;
-        }
-
-        private void InitMaked(int size)
-        {
-            mMaked.SizeAllocated = size;
-            mMaked.Buffer = new byte[size];
-        }
-
-        private void InitPlain(ushort tipo)
-        {
-            m_Tipo = tipo;
-            mPlain.Buffer = new byte[0];
-            mMaked.Buffer = new byte[0];
-
-            AddPlain(BitConverter.GetBytes(m_Tipo), sizeof(ushort));
-        }
-
-        private void Reset()
-        {
-            mPlain.IndexR = 0;
-            mPlain.IndexW = 0;
-            mMaked.IndexR = 0;
-            mMaked.IndexW = 0;
-        }
-
-       
-        private void Add(ref OffsetIndex index, byte[] buf, int size)
-        {
-            Buffer.BlockCopy(buf, 0, index.Buffer, index.IndexW, size);            
-            index.IndexW += size;
-        }
-      
-        public ulong ReadUInt64()
-        {
-            byte[] bytes = new byte[sizeof(ulong)];
-            ReadPlain(bytes, sizeof(ulong));
-            return BitConverter.ToUInt64(bytes, 0);
-        }
-
-        public uint ReadUInt32()
-        {
-            byte[] bytes = new byte[sizeof(uint)];
-            ReadPlain(bytes, sizeof(uint));
-            return BitConverter.ToUInt32(bytes, 0);
-        }
-
-        public ushort ReadUInt16()
-        {
-            byte[] bytes = new byte[sizeof(ushort)];
-            ReadPlain(bytes, sizeof(ushort));
-            return BitConverter.ToUInt16(bytes, 0);
+            return Reader.ReadDouble();
         }
 
         public byte ReadUInt8()
         {
-            byte[] bytes = new byte[sizeof(byte)];
-            ReadPlain(bytes, sizeof(byte));
-            return bytes[0];
+            return Reader.ReadByte();
         }
+
+        public short ReadInt16()
+        {
+            return Reader.ReadInt16();
+        }
+        public ushort ReadUInt16()
+        {
+            return Reader.ReadUInt16();
+        }
+
+
+
+        public uint ReadUInt32()
+        {
+            return Reader.ReadUInt32();
+        }
+        public int ReadInt32()
+        {
+            return Reader.ReadInt32();
+        }
+
+        public ulong ReadUInt64()
+        {
+            return Reader.ReadUInt64();
+        }
+
+        public long ReadInt64()
+        {
+            return Reader.ReadInt64();
+        }
+
+        public float ReadSingle()
+        {
+            return Reader.ReadSingle();
+        }
+
+        public string ReadString()
+        {
+            return Reader.ReadPStr();
+        }
+        public void Skip(int count)
+        {
+            Reader.Skip(count);
+        }
+
+
+        public void Seek(int offset, int origin)
+        {
+            Reader.Seek(offset, origin);
+        }
+
+        public T Read<T>() where T : struct
+        {
+            return Reader.Read<T>();
+        }
+        public IEnumerable<uint> Read(uint count)
+        {
+            return Reader.Read(count);
+        }
+        public object Read(object value, int Count)
+        {
+            return Reader.Read(value, Count);
+        }
+
+        public object Read(object value)
+        {
+            return Reader.Read(value);
+        }
+
+
+
+        public string ReadPStr(uint Count)
+        {
+            var data = new byte[Count];
+            //ler os dados
+            Reader.BaseStream.Read(data, 0, (int)Count);
+            var value = Encoding.ASCII.GetString(data);
+            return value;
+        }
+
+        public bool ReadPStr(out string value, uint Count)
+        {
+            return Reader.ReadPStr(out value, Count);
+        }
+        public bool ReadPStr(out string value)
+        {
+            return Reader.ReadPStr(out value);
+        }
+        public string ReadPStr()
+        {
+            return Reader.ReadPStr();
+        }
+        public bool ReadDouble(out Double value)
+        {
+            return Reader.ReadDouble(out value);
+        }
+        public bool ReadBytes(out byte[] value)
+        {
+            return Reader.ReadBytes(out value);
+        }
+
+        public bool ReadBytes(out byte[] value, int len)
+        {
+            return Reader.ReadBytes(out value, len);
+        } 
+        public bool ReadByte(out byte value)
+        {
+            return Reader.ReadByte(out value);
+        }
+        public byte ReadByte()
+        {
+            return Reader.ReadByte();
+        }
+        public bool ReadInt16(out short value)
+        {
+            return Reader.ReadInt16(out value);
+        }
+        public bool ReadUInt16(out ushort value)
+        {
+            return Reader.ReadUInt16(out value);
+        }
+
+        public bool ReadUInt32(out uint value)
+        {
+            return Reader.ReadUInt32(out value);
+        }
+
+        public bool ReadInt32(out int value)
+        {
+            return Reader.ReadInt32(out value);
+        }
+
+        public bool ReadUInt64(out ulong value)
+        {
+            return Reader.ReadUInt64(out value);
+        }
+
+        public bool ReadInt64(out long value)
+        {
+            return Reader.ReadInt64(out value);
+        }
+
+        public bool ReadSingle(out float value)
+        {
+            return Reader.ReadSingle(out value);
+        }
+
+
+        public byte[] GetRemainingData
+        {
+            get => Reader.GetRemainingData();
+        }
+        public byte[] ReadBytes(int count)
+        {
+            return Reader.ReadBytes(count);
+        }
+
+        void AddPlain(byte[] strBytes, int Length)
+        {
+            Write(strBytes, Length);
+        }
+
 
         public void AddString(string str)
         {
             byte[] strBytes = Encoding.UTF8.GetBytes(str);
             AddUInt16((ushort)strBytes.Length);
             AddPlain(strBytes, strBytes.Length);
-        }
+        }                                
 
-        public string ReadString()
-        {
-            ushort len = ReadUInt16();
-            byte[] strBytes = new byte[len];
-            ReadPlain(strBytes, len);
-            return Encoding.UTF8.GetString(strBytes);
-        }
         public void AddBuffer(object value, int size)
-            {
+        {
             try
             {
                 byte[] arr = new byte[size];
@@ -539,7 +314,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
                 AddPlain(arr, size);
                 ptr = IntPtr.Zero;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
             }
         }
@@ -588,7 +363,9 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
         public void ReadBuffer(byte[] @buffer, int len)
         {
-            ReadPlain(@buffer, len);
+            
+            ReadBytes(out byte[] _buffer, len);
+
         }
 
         public void AddZeroByte(int size)
@@ -608,9 +385,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
         public void ReadQWord(out ulong qword)
         {
-            byte[] bytes = new byte[sizeof(ulong)];
-            ReadPlain(bytes, sizeof(ulong));
-            qword = BitConverter.ToUInt64(bytes, 0);
+            qword = ReadUInt64(); 
         }
 
         public void AddDWord(uint dword)
@@ -620,10 +395,8 @@ namespace PangyaAPI.SuperSocket.SocketBase
         }
 
         public void ReadDWord(out uint dword)
-        {
-            byte[] bytes = new byte[sizeof(uint)];
-            ReadPlain(bytes, sizeof(uint));
-            dword = BitConverter.ToUInt32(bytes, 0);
+        {                                      
+            dword = ReadUInt32();
         }
 
         public void AddWord(ushort word)
@@ -633,49 +406,27 @@ namespace PangyaAPI.SuperSocket.SocketBase
         }
 
         public void ReadWord(out ushort word)
-        {
-            byte[] bytes = new byte[sizeof(ushort)];
-            ReadPlain(bytes, sizeof(ushort));
-            word = BitConverter.ToUInt16(bytes, 0);
+        {                                     
+            word = ReadUInt16();
         }
 
         public void AddByte(byte b)
         {
             AddPlain(b.ConvertArray(), 1);
-        }
-
-        public void ReadByte(out byte b)
-        {
-            byte[] bytes = new byte[1];
-            ReadPlain(bytes, 1);
-            b = bytes[0];
-        }
+        }     
 
         public void AddInt64(long value)
         {
             byte[] bytes = BitConverter.GetBytes(value);
             AddPlain(bytes, sizeof(long));
         }
-
-        public void ReadInt64(out long value)
-        {
-            byte[] bytes = new byte[sizeof(long)];
-            ReadPlain(bytes, sizeof(long));
-            value = BitConverter.ToInt64(bytes, 0);
-        }
-
+                 
         public void AddInt32(int value)
         {
             byte[] bytes = BitConverter.GetBytes(value);
             AddPlain(bytes, sizeof(int));
-        }
+        }              
 
-        public void ReadInt32(out int value)
-        {
-            byte[] bytes = new byte[sizeof(int)];
-            ReadPlain(bytes, sizeof(int));
-            value = BitConverter.ToInt32(bytes, 0);
-        }
         public void AddFloat(float value)
         {
             byte[] bytes = BitConverter.GetBytes(value);
@@ -683,10 +434,8 @@ namespace PangyaAPI.SuperSocket.SocketBase
         }
 
         public void ReadFloat(out float value)
-        {
-            byte[] bytes = new byte[sizeof(float)];
-            ReadPlain(bytes, sizeof(float));
-            value = BitConverter.ToSingle(bytes, 0);
+        {                                            
+            value = ReadSingle();      
         }
 
         public void AddDouble(double value)
@@ -694,23 +443,10 @@ namespace PangyaAPI.SuperSocket.SocketBase
             byte[] bytes = BitConverter.GetBytes(value);
             AddPlain(bytes, sizeof(double));
         }
-
-        public void ReadDouble(out double value)
-        {
-            byte[] bytes = new byte[sizeof(double)];
-            ReadPlain(bytes, sizeof(double));
-            value = BitConverter.ToDouble(bytes, 0);
-        }
-
+                         
         public void ReadString(out string str)
-        {
-            short length;
-            ReadInt16(out length);
-
-            byte[] bytes = new byte[length];
-            ReadPlain(bytes, length);
-
-            str = Encoding.ASCII.GetString(bytes);
+        {                    
+            str = ReadPStr();
         }
 
         public void AddWString(string str)
@@ -719,17 +455,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
             AddInt16((short)bytes.Length);
             AddPlain(bytes, bytes.Length);
         }
-
-        public void ReadWString(out string str)
-        {
-            short length;
-            ReadInt16(out length);
-
-            byte[] bytes = new byte[length];
-            ReadPlain(bytes, length);
-
-            str = Encoding.Unicode.GetString(bytes);
-        }
+           
         public void AddUInt16(ushort value)
         {
             byte[] bytes = BitConverter.GetBytes(value);
@@ -745,247 +471,289 @@ namespace PangyaAPI.SuperSocket.SocketBase
         {
             byte[] bytes = BitConverter.GetBytes(value);
             AddPlain(bytes, sizeof(short));
-        }
-
-        public void ReadUInt16(out ushort value)
-        {
-            byte[] bytes = new byte[sizeof(ushort)];
-            ReadPlain(bytes, sizeof(ushort));
-            value = BitConverter.ToUInt16(bytes, 0);
-        }
-        public void ReadInt16(out short value)
-        {
-            byte[] bytes = new byte[sizeof(short)];
-            ReadPlain(bytes, sizeof(short));
-            value = BitConverter.ToInt16(bytes, 0);
-        }
+        }                         
 
         public void AddUInt8(byte value)
         {
             AddPlain(new byte[] { value }, sizeof(byte));
         }
 
-        public void ReadUInt8(out byte value)
-        {
-            byte[] bytes = new byte[sizeof(byte)];
-            ReadPlain(bytes, sizeof(byte));
-            value = bytes[0];
-        }
-        //public void AddCompressed(byte[] data)
-        //{
-        //    int compressedSize;
-        //    byte[] compressedData = CompressData(data, out compressedSize);
-        //    AddInt32(compressedSize);
-        //    AddPlain(compressedData, compressedSize);
-        //}
-
-
-        private void AddPlain(byte[] buf, int index, int size)
-        {
-            if (buf == null)
-                throw new ArgumentException("Error arguments invalid, _buf is null in packet.AddPlain()");
-
-            Alloc(ref mPlain, size);
-            Add(ref mPlain, buf, size);
+        public void ReadUInt8(out byte value) {
+            value = ReadByte();
         }
 
-        private void AddMaked(byte[] buf, int index, int size)
+        public void SetReader(PangyaBinaryReader read)
         {
-            if (buf == null)
-                throw new ArgumentException("Error arguments invalid, _buf is null in packet.AddMaked()");
-
-            Alloc(ref mMaked, size);
-            Add(ref mMaked, buf, size);
+            Reader = read;
         }
 
-        public void Alloc(ref OffsetIndex index, int size)
+        #endregion
+
+        #region Methods Writer
+
+        public void Write(byte[] data)
         {
-            if (size > (index.SizeAllocated - index.IndexW))
+            try
             {
-                int ant = index.SizeAllocated;
-
-                if (size < 0)
-                {
-                    throw new Exception("Negative size. packet::alloc()");
-                }
-
-                index.SizeAllocated += ((size - (index.SizeAllocated - index.IndexW)) / CHUNCK_ALLOC + 1) * CHUNCK_ALLOC;
-
-                try
-                {
-                    byte[] tmp = new byte[index.SizeAllocated];
-
-                    if (index.Buffer != null)
-                    {
-                        Buffer.BlockCopy(index.Buffer, 0, tmp, 0, index.IndexW);
-                    }
-
-                    if (index.Buffer != null)
-                    {
-                        index.Buffer = null; // Liberar memória do buffer anterior
-                    }
-
-                    index.Buffer = tmp;
-                }
-                catch (Exception e)
-                {
-                    if (index.Buffer != null)
-                    {
-                        index.Buffer = null; // Liberar memória do buffer anterior
-                    }
-
-                    throw new Exception("Error ao alocar memoria. size_ant: " + ant +
-                                        "\r\nsize_alloc: " + index.SizeAllocated +
-                                        "\r\nsize_request: " + size + ". " + e.Message + ". packet::alloc()");
-                }
-
-                if (index.Buffer == null)
-                {
-                    throw new Exception("Error ao alocar memoria para o buffer em packet::alloc()");
-                }
+                Reply.Write(data);
             }
-        }
-        private void AllocMaked(int size)
-        {
-            if (size > (mMaked.SizeAllocated - mMaked.IndexW))
+            catch
             {
-                int ant = mMaked.SizeAllocated;
+            }
+            return;
+        }
 
-                if (size < 0)
-                    throw new Exception("Negative size. AllocMaked()");
+        public void Write(byte[] data, int len)
+        {
+            try
+            {
+                Reply.Write(data, len);
+            }
+            catch
+            {
+            }
+            return;
+        }
 
-                mMaked.SizeAllocated += ((size - (mMaked.SizeAllocated - mMaked.IndexW)) / CHUNCK_ALLOC + 1) * CHUNCK_ALLOC;
+        public void WriteStruct(object data)
+        {
+            try
+            {
+                Reply.WriteStruct(data);
+            }
+            catch
+            {
+            }
+            return;
+        }
 
-                try
+
+        public void WriteStr(string message, int length)
+        {
+
+            try
+            {
+                if (message == null)
                 {
-                    if (mMaked.Buffer != null)
-                    {
-                        byte[] tmp = new byte[mMaked.SizeAllocated];
-                        Array.Copy(mMaked.Buffer, tmp, mMaked.IndexW);
-                        mMaked.Buffer = tmp;
-                    }
-                    else
-                        mMaked.Buffer = new byte[mMaked.SizeAllocated];
-                }
-                catch (Exception e)
-                {
-                    if (mMaked.Buffer != null)
-                        mMaked.Buffer = null;
-
-                    throw new Exception($"Error allocating memory. size_ant: {ant}\r\nsize_alloc: {mMaked.SizeAllocated}\r\nsize_request: {size}. {e.Message}. AllocMaked()");
+                    message = string.Empty;
                 }
 
-                if (mMaked.Buffer == null)
-                    throw new Exception("Error allocating memory for the buffer in AllocMaked()");
+                message = message.PadRight(length, (char)0x00);
+                Reply.Write(message.Select(Convert.ToByte).ToArray());
+            }
+            catch
+            {
+            }
+            return;
+        }
+
+        public bool WriteStr(string message)
+        {
+            try
+            {
+                WriteStr(message, message.Length);
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+
+        }
+
+        public void WritePStr(string value)
+        {
+
+            try
+            {
+                Reply.WritePStr(value);
+
+            }
+            catch
+            {
+                return;
             }
         }
 
-        private void AllocPlain(int size)
+        public void WriteZero(int count)
         {
-            if (size > (mPlain.Buffer.Length - mPlain.IndexW))
+            try
             {
-                int ant = mPlain.Buffer.Length;
-
-                if (size < 0)
-                    throw new Exception("Negative size. AllocPlain()");
-
-                Array.Resize(ref mPlain.Buffer, mPlain.Buffer.Length + size);
-
-                if (mPlain.Buffer == null)
-                    throw new Exception("Error allocating memory for the buffer in AllocPlain()");
+                Reply.WriteZero(count);
             }
+            catch
+            {
+
+            }
+
+        }
+        public void WriteUInt16(ushort value)
+        {
+            try
+            {
+                Reply.Write(value);
+            }
+            catch
+            {
+
+            }
+
         }
 
-        public ushort GetTipo()
+        public void WriteInt16(short value)
         {
-            return m_Tipo;
+            try
+            {
+                Reply.Write(value);
+            }
+            catch
+            {
+
+            }
+
+        }
+        public void WriteByte(byte value)
+        {
+            try
+            {
+                Reply.Write(value);
+            }
+            catch
+            {
+
+            }
+
         }
 
-        public int GetSize()
+        public void WriteSingle(float value)
         {
-            return mPlain.IndexW;
-        }
-        public WSABuf GetPlainBuf()
-        {
-            return new WSABuf { Length = (uint)mPlain.IndexW, Buffer = mPlain.Buffer };
+            try
+            {
+                Reply.Write(value);
+            }
+            catch
+            {
+
+            }
+
         }
 
-        public WSABuf GetMakedBuf()
+        public void WriteUInt32(uint value)
         {
-            return 
-                new WSABuf
-                { 
-                    Length = (uint)mMaked.IndexW,
-                    Buffer = mMaked.Buffer
-                };
+            try
+            {
+                Reply.Write(value);
+            }
+            catch
+            {
+
+            }
+
         }
 
-        public int GetSizePlain()
+        public void WriteInt32(int value)
         {
-            return mPlain.SizeAllocated;
+            try
+            {
+                Reply.Write(value);
+            }
+            catch
+            {
+
+            }
+
         }
 
-        public int GetSizeMaked()
+        public void WriteUInt64(ulong value)
         {
-            return mMaked.SizeAllocated;
-        }
-        public byte[] GetBuffer()
-        {
-            return mPlain.Buffer;
-        }
-        public int SizePlain()
-        {
-            return mPlain.Size;
+            try
+            {
+                Reply.Write(value);
+            }
+            catch
+            {
+
+            }
+
         }
 
-        public int SizeMaked()
+        public void WriteInt64(long value)
         {
-            return mMaked.Size;
+            try
+            {
+                Reply.Write(value);
+            }
+            catch
+            {
+
+            }
+
         }
 
-        public void init_plain(short _tipo)
+        public void WriteDouble(double value)
         {
-            m_Tipo = (ushort)_tipo;
-            mPlain.Reset();
-            mMaked.Reset();
+            try
+            {
+                Reply.Write(value);
+            }
+            catch
+            {
 
-            AddPlain(BitConverter.GetBytes(m_Tipo), sizeof(ushort));
+            }
+
         }
+
+
+        public void init_plain(ushort value)
+        {
+            Clear();
+            WriteUInt16(value);
+        }
+
+        public byte[] GetBytes()
+        {
+            return Reply.GetBytes;
+        }
+
         public void Clear()
         {
-            mPlain.Clear();
-            mMaked.Clear();
-            m_Tipo = ushort.MaxValue;
+            Reply = new PangyaBinaryWriter();
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // Para detectar chamadas redundantes
+
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-                    mPlain.Clear();
-                    mMaked.Clear();
-                    m_Tipo = ushort.MaxValue;
+                    if (Reader != null)
+                    {
+                        Reader.Dispose();
+                    }
+                    else if (Reply != null)
+                    {
+                        Reply.Dispose();
+                    }
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
                 disposedValue = true;
             }
         }
 
-        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~AppPacketBase()
-        // {
-        //     // Não altere este código. Coloque o código de limpeza no método 'Dispose(bool disposing)'
-        //     Dispose(disposing: false);
-        // }
+        ~AppPacketBase()
+        {
+            Dispose(false);
+        }
 
         public void Dispose()
         {
-            // Não altere este código. Coloque o código de limpeza no método 'Dispose(bool disposing)'
-            Dispose(disposing: true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
+        #endregion
+        #endregion
+        #endregion
     }
 }

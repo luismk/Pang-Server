@@ -11,6 +11,8 @@ using LoginServer.Defines;
 using PangyaAPI.SuperSocket.SocketBase;
 using LoginServer.Session;
 using snmdb = PangyaAPI.SQL.Manager;
+using PangyaAPI.SQL;
+
 namespace LoginServer.PacketFunc
 {
     public static class packet_func_ls
@@ -44,14 +46,10 @@ namespace LoginServer.PacketFunc
                 // Registra o logon no server_uid do player_uid
                 var cmd_rls = new CmdRegisterLogonServer(_session.m_pi.uid, server_uid);
 
-                cmd_rls.ExecCmd();
-
                 if (cmd_rls.getException().getCodeError() != 0)
                     throw cmd_rls.getException();
 
                 var cmd_auth_key_game = new CmdAuthKeyGame(_session.m_pi.uid, server_uid);
-
-                cmd_auth_key_game.ExecCmd();
 
                 if (cmd_auth_key_game.getException().getCodeError() != 0)
                     throw cmd_auth_key_game.getException();
@@ -59,7 +57,7 @@ namespace LoginServer.PacketFunc
                 auth_key_game = cmd_auth_key_game.getAuthKey();
 
                 _smp.Message_Pool.push(("[packet_func::packet003][Log] AuthKeyGame: " + auth_key_game
-                        + ", do player: " + (_session.m_pi.uid)));
+                        + ", do player: " + (_session.m_pi.uid)), _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
 
             }
             catch (exception e)
@@ -72,7 +70,7 @@ namespace LoginServer.PacketFunc
             }
 
             pacote003(ref p, _session, auth_key_game);
-            session_send(p, _session, 1);
+            session_send(ref p, _session, 1);
         }
 
         internal static void packet00B(ParamDispatch _arg1)
@@ -178,7 +176,7 @@ namespace LoginServer.PacketFunc
 
                 // Ok
                 pacote011(ref p, _session);
-                session_send(p, _session, 1);
+                session_send(ref p, _session, 1);
 
                 // Success Login
                 Program.AppServer.SUCCESS_LOGIN("packet008", _session);
@@ -188,9 +186,9 @@ namespace LoginServer.PacketFunc
             {
                 // Erro na hora de salvar o character
                 pacote011(ref p, _session, 1);
-                session_send(p, _session, 1);
+                session_send(ref p, _session, 1);
                 pacote00E(ref p, _session, "", 12, 500051);
-                session_send(p, _session, 1);
+                session_send(ref p, _session, 1);
 
                 _smp.Message_Pool.push("[packet_func::packet008][ErrorSystem] " + e.getFullMessageError(), _smp.type_msg.CL_FILE_LOG_AND_CONSOLE);
             }
@@ -285,7 +283,7 @@ namespace LoginServer.PacketFunc
             }
 
             pacote00E(ref p, _session, wnick, (int)nc, error_info);
-            session_send(p, _session, 1);
+            session_send(ref p, _session, 1);
         }
 
         internal static void packet006(ParamDispatch _arg1)
@@ -334,7 +332,7 @@ namespace LoginServer.PacketFunc
 
                     // FIRST_SET
                     p = pacote001(_session, 0xD9);
-                    session_send(p, _session, 1);
+                    session_send(ref p, _session, 1);
 
                     _smp.Message_Pool.push("[packet_func::packet006][Log] Primeira vez que o player escolhe um character padrao. player[UID="
                             + _session.m_pi.uid + ", ID=" + _session.m_pi.id + "]");
@@ -348,7 +346,7 @@ namespace LoginServer.PacketFunc
             {
 
                 pacote00E(ref p, _session, wnick, 1/*UNKNOWN ERROR*/);
-                session_send(p, _session, 1);
+                session_send(ref p, _session, 1);
 
                 _smp.Message_Pool.push("[packet_func::packet006][ErrorSystem] " + e.getFullMessageError());
             }
@@ -372,7 +370,7 @@ namespace LoginServer.PacketFunc
 
                 var p = _arg1._packet;
                 pacote00E(ref p, _session, "", 12, 500053);
-                session_send(p, _session, 1);
+                session_send(ref p, _session, 1);
 
                 _smp.Message_Pool.push(("[packet_func::packet004][Error] " + e.getFullMessageError()));
             }
@@ -399,8 +397,7 @@ namespace LoginServer.PacketFunc
                     p.AddInt16(_session.m_pi.level);           // 1 level, 1 pc bang(ACHO), com base no S4
                     p.AddInt32(0);                              // valor 0 Unknown
                     p.AddInt32(5);                              // valor 5 Unknown
-                    p.AddBuffer(new _SYSTEMTIME(true), 19); // Time Build Login Server (ACHO)							- JP S9 ler mais ignora ele
-                    p.AddZeroByte(3);   // Time Build Login Server (ACHO)							- JP S9 ler mais ignora ele
+                    p.AddZeroByte(19); // Time Build Login Server (ACHO)							- JP S9 ler mais ignora ele
                     p.AddString("302540");                      // Alguma AuthKey aleatória para minha conta que eu não sei - JP S9 ler mais ignora ele
                     p.AddInt32(0);                             // Unknown valor - JP S9 ler mais ignora ele
                     p.AddInt32(0);                             // Unknown valor - JP S9 ler mais ignora ele
@@ -438,14 +435,14 @@ namespace LoginServer.PacketFunc
             return p;
         }
 
-        public static void session_send(Packet p, Player s, int _debug)
+        public static void session_send(ref Packet p, Player s, int _debug)
         {
             if (s == null)
                 throw new exception("[packet_func::session_send][Error] session *s is nullptr.", STDA_ERROR_TYPE.PACKET_FUNC_LS);
 
-            s.Send(ref p, true);
+            s.Send(ref p);
 
-#if _RELEASE
+#if _DEBUG
             if(_debug == 1)
             {
                 //_smp.Message_Pool.push($"[SEND_PACKET_LOG]: PacketSize({p.GetBytes.Length}) \t\n{p.GetBytes.HexDump()}");
@@ -455,7 +452,7 @@ namespace LoginServer.PacketFunc
         }
         public static void pacote00F(ref Packet p, Player _session, int option = 1)
         {
-            p.init_plain((short)0x0F);
+            p.init_plain((ushort)0x0F);
 
             p.AddByte((byte)option);
 
@@ -463,9 +460,8 @@ namespace LoginServer.PacketFunc
 
             p.AddInt32(0);                             // valor 0 Unknown
             p.AddInt32(5);                             // valor 5 Unknown
-            p.AddBuffer(new _SYSTEMTIME(true), 19);   // Time Build Login Server (ACHO)								- JP S9 ler mais ignora ele
-            p.AddZeroByte(3);   // Time Build Login Server (ACHO)							- JP S9 ler mais ignora ele
-            p.AddString("302540");                      // Alguma AuthKey aleatória para minha conta que eu não sei		- JP S9 ler mais ignora ele
+            p.AddZeroByte(19);   // Time Build Login Server (ACHO)								- JP S9 ler mais ignora ele
+             p.AddString("302540");                      // Alguma AuthKey aleatória para minha conta que eu não sei		- JP S9 ler mais ignora ele
         }
 
         public static void succes_login(LoginServerTcp ls, Player _session, int option = 0)
@@ -484,23 +480,22 @@ namespace LoginServer.PacketFunc
             try
             {
 
-                var cmd_server_list = new CmdServerList(TYPE_SERVER.GAME);
+                CmdServerList cmd_server_list = new CmdServerList(TYPE_SERVER.GAME); // Declare a variável corretamente
 
-                snmdb::NormalManagerDB.add(0, cmd_server_list, null, null);
-                cmd_server_list.ExecCmd();
+                snmdb.NormalManagerDB.add(0, cmd_server_list, null, null); // Passa como referência
+
 
                 if (cmd_server_list.getException().getCodeError() != 0)
                     throw cmd_server_list.getException();
 
                 sis = cmd_server_list.getServerList();
 
-                cmd_server_list.setType(TYPE_SERVER.MSN);
+                cmd_server_list = new CmdServerList(TYPE_SERVER.MSN);
 
                 var cmd_auth_key_login = new CmdAuthKeyLogin(_session.m_pi.uid);
 
                 snmdb::NormalManagerDB.add(0, cmd_auth_key_login, null, null);
                 snmdb::NormalManagerDB.add(0, cmd_server_list, null, null);
-                cmd_server_list.ExecCmd();
 
                 if (cmd_server_list.getException().getCodeError() != 0)
                     throw cmd_server_list.getException();
@@ -559,30 +554,30 @@ namespace LoginServer.PacketFunc
             }
             var p = new Packet();
             pacote010(ref p, _session, auth_key_login);
-            session_send(p, _session, 1);
+            session_send(ref p, _session, 1);
 
             if (option == 0)
             {
                 p = pacote001(_session);
-                session_send(p, _session, 1);
+                session_send(ref p, _session, 1);
             }
 
             pacote002(ref p, _session, sis);
-            session_send(p, _session, 1);
+            session_send(ref p, _session, 1);
 
             pacote009(ref p, _session, msns);
-            session_send(p, _session, 1);
+            session_send(ref p, _session, 1);
 
             if (option == 0)
             {
                 pacote006(ref p, _session, _cmu);
-                session_send(p, _session, 1);
+                session_send(ref p, _session, 1);
             }
         }
 
         private static void pacote006(ref Packet p, Player session, chat_macro_user _mu)
         {
-            p.init_plain((short)0x006);
+            p.init_plain(0x006);
             for (int i = 0; i < _mu.macro.Length; i++)
             {
                 p.AddFixedString(_mu.macro[i], 64);
@@ -592,21 +587,43 @@ namespace LoginServer.PacketFunc
         private static void pacote009(ref Packet p, Player session, List<ServerInfo> v_element)
         {
             p.init_plain(0x009);
-
-            p.AddByte((byte)(v_element.Count & 0xFF)); // nenhum Msn Server on
-
-            for (var i = 0; i < v_element.Count; i++)
-                p.AddBuffer(v_element[i], Marshal.SizeOf(new ServerInfo()));
+            p.AddByte(Convert.ToByte(v_element.Count & 0xFF));	// 1 Game Server online
+            foreach (var server in v_element)
+            {
+                p.AddFixedString(server.Name, 40);// aqui no caso deve ser 16               
+                p.AddInt32(server.UID);//server UID
+                p.AddInt32(server.MaxUser); //suporte maximo de jogadores no server simultaneamente
+                p.AddInt32(server.Curr_User); //Total de jogadores no server atualmente ou simultaneamente(limitador)
+                p.AddFixedString(server.IP, 18);
+                p.AddInt32(server.Port);
+                p.AddUInt32(server.Property.ulProperty); //imagem do grand prix 2048, manto 16               
+                p.AddInt32(server.AngelicWingsNum); //Angelic Number Count
+                p.AddUInt16((ushort)server.EventFlag.usEventFlag);
+                p.AddInt16(server.Unknown);
+                p.AddInt32(server.AppRate); //tem alguma coisa aqui
+                p.AddUInt16((ushort)server.ImgNo);
+            }
         }
 
         private static void pacote002(ref Packet p, Player session, List<ServerInfo> v_element)
         {
-            p.init_plain((short)0x002);
-
-            p.AddByte((byte)(v_element.Count & 0xFF)); // nenhum GS Server on
-
-            for (var i = 0; i < v_element.Count; i++)
-                p.AddBuffer(v_element[i]);
+            p.init_plain(0x002);            
+            p.AddByte(Convert.ToByte(v_element.Count & 0xFF));	// 1 Game Server online
+            foreach (var server in v_element)
+            {
+                p.AddFixedString(server.Name, 40);// aqui no caso deve ser 16               
+                p.AddInt32(server.UID);//server UID
+                p.AddInt32(server.MaxUser); //suporte maximo de jogadores no server simultaneamente
+                p.AddInt32(server.Curr_User); //Total de jogadores no server atualmente ou simultaneamente(limitador)
+                p.AddFixedString(server.IP, 18);
+                p.AddInt32(server.Port);
+                p.AddUInt32(server.Property.ulProperty); //imagem do grand prix 2048, manto 16               
+                p.AddInt32(server.AngelicWingsNum); //Angelic Number Count
+                p.AddUInt16((ushort)server.EventFlag.usEventFlag);
+                p.AddInt16(server.Unknown);
+                p.AddInt32(server.AppRate); //tem alguma coisa aqui
+                p.AddUInt16((ushort)server.ImgNo);
+            }
         }
 
         private static void pacote010(ref Packet p, Player session, string AuthKey)
@@ -619,8 +636,7 @@ namespace LoginServer.PacketFunc
         private static void pacote003(ref Packet p, Player session, string AuthKeyLogin, int option = 0)
         {
             p.init_plain(0x003);
-            p.AddInt32(option);
-
+            p.AddInt32(option);     
             p.AddString(AuthKeyLogin);
         }
 

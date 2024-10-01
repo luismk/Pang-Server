@@ -46,7 +46,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
             
             m_lastVerify = false;
 
-            var r = procedure("pangya.ProcVerifyPass", new string[] { "@IDUSER", "@PASS" }, new type_SqlDbType[] { type_SqlDbType.Int, type_SqlDbType.VarChar }, new string[] { m_uid.ToString(), m_pass }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcVerifyPass",m_uid.ToString() + ", " + m_pass);
 
             checkResponse(r, "nao conseguiu pegar a uid do player pela senha: " + m_pass);
 

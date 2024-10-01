@@ -1,14 +1,4 @@
-﻿
-using PangyaAPI.SQL.DATA.TYPE;
-using PangyaAPI.SQL;
-
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using PangyaAPI.SQL.Tools;
+﻿using System;
 namespace PangyaAPI.SQL.DATA.Cmd
 {
     public class CmdLogonCheck : Pangya_DB
@@ -17,7 +7,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
         private bool m_check;
         private int m_server_uid = -1;
 
-        protected override string _getName { get; set; } = "CmdLogoCheck";
+        protected override string _getName { get; } = "CmdLogoCheck";
 
         public CmdLogonCheck(int _uid)
         {

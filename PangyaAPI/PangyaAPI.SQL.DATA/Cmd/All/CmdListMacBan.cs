@@ -14,7 +14,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
     public class CmdListMacBan: Pangya_DB
     {
         List<string> v_list_mac_ban;
-        protected override string _getName { get; set; } = "CmdListMacBan";
+        protected override string _getName { get; } = "CmdListMacBan";
 
         public CmdListMacBan()
         {

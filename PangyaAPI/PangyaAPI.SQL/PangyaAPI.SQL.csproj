@@ -51,7 +51,6 @@
     <Compile Include="Manager\mssql.cs" />
     <Compile Include="Manager\NormalDB.cs" />
     <Compile Include="Manager\NormalManagerDB.cs" />
-    <Compile Include="Manager\pangya_base_db.cs" />
     <Compile Include="Manager\Pangya_DB.cs" />
     <Compile Include="Engine\SQLResponse.cs" />
     <Compile Include="Tools\EngineTools.cs" />

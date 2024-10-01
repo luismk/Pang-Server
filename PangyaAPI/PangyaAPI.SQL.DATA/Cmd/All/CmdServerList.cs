@@ -1,9 +1,7 @@
-﻿using PangyaAPI.SQL.DATA.TYPE;
-using PangyaAPI.SQL;
-
+﻿using PangyaAPI.SQL.DATA.TYPE;    
 using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Linq;
 
 namespace PangyaAPI.SQL.DATA.Cmd
 {
@@ -16,11 +14,10 @@ namespace PangyaAPI.SQL.DATA.Cmd
         AUTH,
     }
     public class CmdServerList: Pangya_DB
-    {
-
+    {                  
         TYPE_SERVER m_type;
         List<ServerInfo> v_server_list;
-        protected override string _getName { get; set; } = "CmdServerList";
+        protected override string _getName { get; } = "CmdServerList";
         public CmdServerList(TYPE_SERVER _type)
         {
             v_server_list = new List<ServerInfo>();
@@ -34,7 +31,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
 
         protected override void lineResult(ctx_res _result, uint _index_result)
         {
-            checkColumnNumber(13);
+            checkColumnNumber(13);//melhorar depois
             try
             {
                 ServerInfo si = new ServerInfo();
@@ -54,8 +51,8 @@ namespace PangyaAPI.SQL.DATA.Cmd
                 si.ImgNo = short.Parse(_result.data[10].ToString());
                 si.AppRate = short.Parse(_result.data[11].ToString());
                 si.Unknown = short.Parse(_result.data[12].ToString());    // Estava o rate_scratchy mas realoquei ele para o ServerInfoEx::Rate
-
-                v_server_list.Add(si);
+                if (!v_server_list.Any(c=> c.UID == si.UID))    
+                    v_server_list.Add(si);
             }
             catch (Exception ex)
             {
@@ -68,7 +65,8 @@ namespace PangyaAPI.SQL.DATA.Cmd
         {
             v_server_list.Clear();
 
-            var r = procedure("pangya.ProcGetServerList", new string[] { "@OPT" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { Convert.ToByte(m_type).ToString() }, ParameterDirection.Input);
+            var @tipo = Convert.ToByte(m_type);
+            var r = procedure("pangya.ProcGetServerList", tipo.ToString());
 
             checkResponse(r, "nao conseguiu pegar o server list");
             return r;

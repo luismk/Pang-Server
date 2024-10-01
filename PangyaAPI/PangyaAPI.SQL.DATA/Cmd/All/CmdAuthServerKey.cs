@@ -9,7 +9,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
     {
         int m_server_uid = -1;
         AuthServerKey m_ask;
-        protected override string _getName { get; set; } = "CmdAuthServerKey";
+        protected override string _getName { get; } = "CmdAuthServerKey";
 
         public CmdAuthServerKey(int _uid)
         {

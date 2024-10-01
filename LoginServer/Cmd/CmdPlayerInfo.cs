@@ -9,7 +9,7 @@ namespace LoginServer.Cmd
     {
         readonly int m_uid = -1;
         readonly player_info m_pi = new player_info();
-        protected override string _getName { get; set; } = "CmdPlayerInfo";
+        protected override string _getName { get; } = "CmdPlayerInfo";
 
         public CmdPlayerInfo(int _uid)
         {
@@ -51,7 +51,7 @@ namespace LoginServer.Cmd
 
         protected override Response prepareConsulta()
         {
-            var r = procedure("pangya.ProcGetPlayerInfoLogin", new string[] { "@IDUSER" }, new type_SqlDbType[] { type_SqlDbType.Int }, new string[] { m_uid.ToString() }, ParameterDirection.Input);
+            var r = procedure("pangya.ProcGetPlayerInfoLogin", m_uid.ToString());
             checkResponse(r, "nao conseguiu pegar o info do player: " + (m_uid));
             return r;
         }

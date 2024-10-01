@@ -243,18 +243,18 @@ namespace PangyaAPI.SuperSocket.SocketBase
         }
         public void Send(TAppSession session, Packet packet)
         {
-            session.Send(ref packet, true);
+            session.Send(ref packet);
         }
 
         public void Send(TAppSession session, byte[] packet)
         {
-            session.Send(packet, true);
+            session.Send(packet);
         }
         public void SendToAll(Packet packet)
         {
             foreach (var session in m_SessionDict.Values)
             {
-                session.Send(ref packet, true);
+                session.Send(ref packet);
             }
         }
 
@@ -351,7 +351,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
             func_arr.func_arr_ex func = null;
             try
             {
-                func = funcs.getPacketCall((short)_packet.GetTipo());
+                func = funcs.getPacketCall((short)_packet.Id);
             }
             catch (Exception e)
             {
@@ -365,8 +365,7 @@ namespace PangyaAPI.SuperSocket.SocketBase
                     _packet = _packet
                 }) != 0)
                 {
-                    _smp.Message_Pool.push("[TcpServer.dispach_packet_same_thread][Error] Ao tratar o pacote. ID: " + (_packet.GetTipo())
-                            + "(0x" + (_packet.GetTipo()) + ").");
+                    _smp.Message_Pool.push("[TcpServer.dispach_packet_same_thread][Error] Ao tratar o pacote. ID: " + _packet.Id.ToString() + "(0x" + (_packet.Id) + ").");
                     _session.Close();
                 }
             }

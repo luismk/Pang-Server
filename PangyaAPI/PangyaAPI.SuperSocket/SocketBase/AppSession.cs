@@ -356,11 +356,10 @@ namespace PangyaAPI.SuperSocket.SocketBase
 
         public virtual void Send(ref Packet packet, bool compress = false)
         {
-            var new_data = packet.GetPlainBuf().Buffin;
-            if (compress)
-            {
-                new_data = new_data.ServerEncrypt(m_key);
-            }
+            var new_data = packet.GetBytes();
+            _smp.Message_Pool.push("[AppSession::Send][log]: " + new_data.HexDump(), _smp.type_msg.CL_ONLY_CONSOLE);
+            Console.WriteLine(Environment.NewLine);
+            new_data = new_data.ServerEncrypt(m_key);  
             InternalSend(new ArraySegment<byte>(new_data, 0, new_data.Length));
             
         }

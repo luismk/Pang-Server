@@ -15,7 +15,7 @@ namespace PangyaAPI.SQL.DATA.Cmd
         private readonly int m_uid;
         private readonly int m_typeid;
 
-        protected override string _getName { get; set; } = "CmdFuncPartsCharacter";
+        protected override string _getName { get; } = "CmdFuncPartsCharacter";
         public CmdFuncPartsCharacter(int _uid,  int _typeid)
         {
             m_uid = _uid;
@@ -28,24 +28,8 @@ namespace PangyaAPI.SQL.DATA.Cmd
         }
 
         protected override Response prepareConsulta()
-        {
-
-            var r = procedure("pangya.FuncConcertaPartsCharacter",
-                new string[]
-                {
-                    "@IDUSER",
-                    "@_TYPEID",
-                }, new type_SqlDbType[]
-                {
-                    type_SqlDbType.Int,
-                    type_SqlDbType.Int,
-                   
-                }, new string[]
-            {
-                m_uid.ToString(),
-               
-               m_typeid.ToString()
-            }, ParameterDirection.Input);
+        {                                                                       
+            var r = procedure("pangya.FuncConcertaPartsCharacter", m_uid.ToString() +", " + m_typeid.ToString());
             checkResponse(r, "nao conseguiu concertar o character[TYPEID=" + (m_typeid) + "] para o player: " + (m_uid));
             return r;
         }

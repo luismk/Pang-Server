@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Runtime.InteropServices;
-using LoginServer.Cmd;
 using LoginServer.ServerTcp;
 using LoginServer.Session;
-using PangyaAPI.SQL.DATA.Cmd;
-using PangyaAPI.SQL.DATA.TYPE;
-using PangyaAPI.Utilities;
-using snmdb = PangyaAPI.SQL.Manager;
 namespace LoginServer
 {
     internal class Program
